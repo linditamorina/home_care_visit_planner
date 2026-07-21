@@ -25,7 +25,7 @@ async function seedDatabase() {
     patients.push({
       reference_code: `PAT-${faker.string.alphanumeric(6).toUpperCase()}`,
       age_group: faker.helpers.arrayElement(['18-30', '31-50', '51-70', '70+']),
-      zone_id: faker.helpers.arrayElement(['Zona Veriore', 'Zona Jugore', 'Zona Qendër', 'Zona Lindore']),
+      zone_id: faker.helpers.arrayElement(['Qendra', 'Iliridë', 'Bair', 'Zhabar', 'Tavnik', 'Suhodoll']),
     });
   }
 
@@ -40,11 +40,10 @@ async function seedDatabase() {
   }
   console.log(`✅ U shtuan ${insertedPatients.length} pacientë sintetikë.`);
 
-  // UUID e sakta
   const FIELD_WORKER_ID = 'eaf3b619-d94c-413d-a37c-8a0d4f14b2ae'; 
-  const SUPERVISOR_ID = 'a8f08adc-ba84-4507-a3a2-08ef180cb60e'; // <-- Hequr germa 't' ne fund
+  const SUPERVISOR_ID = 'a8f08adc-ba84-4507-a3a2-08ef180cb60e';
 
-  // 2. Gjenerimi i Vizitave
+  // 2. Gjenerimi i Vizitave (Këtu shtohen logjistikat e reja)
   const visits = [];
   for (let i = 0; i < 50; i++) {
     const scheduledStart = faker.date.soon({ days: 10 });
@@ -56,6 +55,9 @@ async function seedDatabase() {
       scheduled_start: scheduledStart.toISOString(),
       scheduled_end: scheduledEnd.toISOString(),
       status: faker.helpers.arrayElement(['scheduled', 'completed', 'cancelled']),
+      priority: faker.helpers.arrayElement(['emergjente', 'normale', 'normale']), // 'normale' ka më shumë gjasa
+      is_patient_notified: faker.datatype.boolean(),
+      care_category: faker.helpers.arrayElement(['Kujdes për të Moshuar', 'Paliativ', 'Nëna dhe Fëmijë', 'Rehabilitim Fizik']),
     });
   }
 
@@ -65,10 +67,10 @@ async function seedDatabase() {
     .select();
 
   if (visitsError) {
-    console.error('Gabim gjatë shtimit të vizitave. Kontrollo nëse FIELD_WORKER_ID ekziston në tabelën "users"!', visitsError);
+    console.error('Gabim gjatë shtimit të vizitave:', visitsError);
     return;
   }
-  console.log(`✅ U shtuan ${insertedVisits.length} vizita.`);
+  console.log(`✅ U shtuan ${insertedVisits.length} vizita me prioritete dhe kategori.`);
 
   console.log('🎉 Seeding përfundoi me sukses!');
 }
