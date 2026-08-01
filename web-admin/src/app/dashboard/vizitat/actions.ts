@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 
-// 1. Funksioni për të marrë oraret e zëna për një datë
-export async function merrOraretEZena(staff_id: string, date: string) {
+// 1. Funksioni për të marrë oraret e zëna për një datë (Përshtatur për Ekip)
+export async function merrOraretEZena(team_id: string, date: string) {
   const supabase = await createClient()
   
   const startOfDay = new Date(`${date}T00:00:00`).toISOString()
@@ -13,7 +13,7 @@ export async function merrOraretEZena(staff_id: string, date: string) {
   const { data, error } = await supabase
     .from('visits')
     .select('scheduled_start')
-    .eq('assigned_staff_id', staff_id)
+    .eq('assigned_team_id', team_id) // Ndryshuar nga staff në team
     .neq('status', 'cancelled')
     .gte('scheduled_start', startOfDay)
     .lte('scheduled_start', endOfDay)
@@ -40,19 +40,19 @@ export async function eshteVizitaEPare(patient_id: string) {
   return count === 0
 }
 
-// 3. Funksioni Kryesor i Krijimit të Vizitës
+// 3. Funksioni Kryesor i Krijimit të Vizitës (Përshtatur për Ekip)
 export async function krijoVizite(formData: FormData) {
   const supabase = await createClient()
 
   const patient_id = formData.get('patient_id') as string
-  const assigned_staff_id = formData.get('assigned_staff_id') as string
+  const assigned_team_id = formData.get('assigned_team_id') as string // Ndryshuar nga staff
   const visit_date = formData.get('visit_date') as string 
   const visit_time = formData.get('visit_time') as string 
   const priority = formData.get('priority') as string
   const care_category = formData.get('care_category') as string
   const is_patient_notified = formData.get('is_patient_notified') === 'true'
 
-  if (!patient_id || !assigned_staff_id || !visit_date || !visit_time) {
+  if (!patient_id || !assigned_team_id || !visit_date || !visit_time) {
     return { error: 'Të gjitha fushat kryesore janë të detyrueshme.' }
   }
 
@@ -67,20 +67,20 @@ export async function krijoVizite(formData: FormData) {
   const { data: conflicts } = await supabase
     .from('visits')
     .select('id')
-    .eq('assigned_staff_id', assigned_staff_id)
+    .eq('assigned_team_id', assigned_team_id)
     .neq('status', 'cancelled')
     .lt('scheduled_start', scheduled_end)
     .gt('scheduled_end', scheduled_start)
 
   if (conflicts && conflicts.length > 0) {
-    return { error: '⚠️ Konflikt Orari: Ky punonjës sapo u caktua në një vizitë tjetër.' }
+    return { error: '⚠️ Konflikt Orari: Ky ekip sapo u caktua në një vizitë tjetër.' }
   }
 
   const { error: insertError } = await supabase
     .from('visits')
     .insert([{
       patient_id,
-      assigned_staff_id,
+      assigned_team_id, // Ruajmë Ekipin
       scheduled_start,
       scheduled_end,
       priority,
@@ -116,6 +116,7 @@ export async function ndryshoVizite(formData: FormData) {
   if (error) return { error: 'Ndodhi një gabim gjatë përditësimit të vizitës.' }
 
   revalidatePath('/dashboard/vizitat')
+  revalidatePath('/dashboard/stafi')
   return { success: true }
 }
 

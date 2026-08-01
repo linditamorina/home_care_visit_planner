@@ -34,23 +34,46 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // PËRDORIMI I getSession() NËSTEKSTIN E MIDDLEWARE PËR TË SHMANGUR GABIMET E RRETIT
-  const { data: { session } } = await supabase.auth.getSession()
+ // ... kodi ekzistues sipër mbetet i njëjtë
 
+  const { data: { session } } = await supabase.auth.getSession()
   const path = request.nextUrl.pathname
 
-  // 1. Nëse përdoruesi NUK është i kyçur dhe po tenton të hyjë te /dashboard (ose çdo gjë tjetër përveç /login)
-  if (!session && path.startsWith('/dashboard')) {
+  const isDashboardRoute = path.startsWith('/dashboard')
+  const isAdminRoute = path.startsWith('/admin')
+  const isProtectedRoute = isDashboardRoute || isAdminRoute
+
+  // 1. Mbrojtja e Rrugëve Private
+  if (!session && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // 2. Nëse përdoruesi ÉSHTË i kyçur dhe ndodhet te /login, dërgoje direkt te /dashboard
-  if (session && path === '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // 2. Menaxhimi i Roleve nëse përdoruesi është i kyçur
+  if (session) {
+    // Lexojmë rolin direkt nga databaza për të mos lejuar manipulime nga klienti
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
+
+    const role = userData?.role
+
+    // Nëse është në /login, e kthejmë te paneli i tij
+    if (path === '/login') {
+      if (role === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
+      if (role === 'supervisor') return NextResponse.redirect(new URL('/dashboard', request.url))
+      // Punonjësit e terrenit nuk duhet të kalojnë përtej login në web
+      await supabase.auth.signOut()
+      return response
+    }
+
+    // RBAC: Ndalimi i Supervizorit të hyjë te Admin
+    if (isAdminRoute && role !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
   return response
@@ -58,10 +81,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Përfshi vetëm rrugët që kërkojnë kontroll, ose përjashto qartësisht skedarët statikë.
-     * Kjo siguron që faqja e login-it dhe root (/) të mos bllokohen në unazë.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

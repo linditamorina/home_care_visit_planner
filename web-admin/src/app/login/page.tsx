@@ -24,11 +24,11 @@ export default function LoginPage() {
     if (result?.error) {
       setModal({ isOpen: true, type: 'error', message: result.error })
       setIsLoading(false)
-    } else if (result?.success) {
+    } else if (result?.success && result.redirectUrl) {
       setModal({ isOpen: true, type: 'success', message: 'Autentifikimi u krye me sukses! Po hapim panelin...' })
-      // Presim 1.5 sekonda që përdoruesi të lexojë mesazhin, pastaj e ridrejtojmë
       setTimeout(() => {
-        router.push('/dashboard')
+        // Tani router-i drejtohet në mënyrë dinamike
+        router.push(result.redirectUrl)
       }, 1500)
     }
   }

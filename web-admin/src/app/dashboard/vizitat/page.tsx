@@ -5,14 +5,25 @@ import { createClient } from '@/utils/supabase/client'
 import KrijoViziteModal from './KrijoViziteModal'
 import NdryshoViziteModal from './NdryshoViziteModal'
 import { anuloVizite } from './actions'
+import { useSearchParams } from 'next/navigation'
 
 export default function VizitatPage() {
   const [visits, setVisits] = useState<any[]>([])
   const [patientsList, setPatientsList] = useState<any[]>([])
-  const [staffList, setStaffList] = useState<any[]>([])
+  const [teamsList, setTeamsList] = useState<any[]>([]) // 1. Shtojmë state për ekipet
   const [loading, setLoading] = useState(true)
 
+  const searchParams = useSearchParams()
+  const urlFilter = searchParams.get('filter')
+
   const [filter, setFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<'date_asc' | 'date_desc' | 'created_desc'>('date_asc')
+
+  useEffect(() => {
+    if (urlFilter) {
+      setFilter(urlFilter)
+    }
+  }, [urlFilter])
   
   const [visitToCancel, setVisitToCancel] = useState<string | null>(null)
   const [isCancelling, setIsCancelling] = useState(false)
@@ -20,22 +31,26 @@ export default function VizitatPage() {
   const supabase = createClient()
 
   async function loadData() {
-    setLoading(true)
-
-    const { data: pList } = await supabase.from('patients').select('id, reference_code')
+    // 2. Tërheqim pacientët (shtuam zones(name) për t'u shfaqur bukur në dropdown)
+    const { data: pList } = await supabase.from('patients').select('id, reference_code, zones(name)')
     setPatientsList(pList || [])
 
-    const { data: sList } = await supabase.from('users').select('id, full_name').eq('role', 'field_worker')
-    setStaffList(sList || [])
+    // 3. Tërheqim ekipet nga databaza
+    const { data: tList } = await supabase.from('teams').select('id, name, shift_type')
+    setTeamsList(tList || [])
 
+    // 4. Tërheqim vizitat (përditësuam lidhjen nga users në teams)
     const { data: vList } = await supabase
       .from('visits')
       .select(`
         *,
-        patients (reference_code, zone_id),
-        users!assigned_staff_id (full_name)
+        patients (
+          reference_code,
+          zone_id,
+          zones (name)
+        ),
+        teams (name)
       `)
-      .order('scheduled_start', { ascending: true })
 
     setVisits(vList || [])
     setLoading(false)
@@ -43,6 +58,17 @@ export default function VizitatPage() {
 
   useEffect(() => {
     loadData()
+
+    const channel = supabase
+      .channel('live-visits')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => {
+        loadData()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   async function confirmCancel() {
@@ -89,7 +115,19 @@ export default function VizitatPage() {
     return true
   })
 
-  // Funksioni inxhinierik për lokalizimin e UI (Përkthimi i statusit)
+  const sortedAndFilteredVisits = [...filteredVisits].sort((a, b) => {
+    if (sortBy === 'date_asc') {
+      return new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime()
+    }
+    if (sortBy === 'date_desc') {
+      return new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime()
+    }
+    if (sortBy === 'created_desc') {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    }
+    return 0
+  })
+
   const ktheStatusinNeShqip = (status: string) => {
     switch (status) {
       case 'scheduled': return 'E PLANIFIKUAR'
@@ -109,74 +147,90 @@ export default function VizitatPage() {
             Menaxhimi logjistik i orareve, prioriteteve dhe stafit në terren.
           </p>
         </div>
-        <KrijoViziteModal patients={patientsList} staff={staffList} />
+        {/* 5. Kalojmë prop-in teams tek Modali */}
+        <KrijoViziteModal patients={patientsList} teams={teamsList} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">Filtro:</span>
-        
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            filter === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Të gjitha ({counts.all})
-        </button>
+        <div className="flex flex-wrap items-center gap-2 flex-1">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">Filtro:</span>
+          
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              filter === 'all' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Të gjitha ({counts.all})
+          </button>
 
-        <button
-          onClick={() => setFilter('deadline')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
-            filter === 'deadline' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-          }`}
-        >
-          Afër Deadline ({counts.deadline})
-        </button>
+          <button
+            onClick={() => setFilter('deadline')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+              filter === 'deadline' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+            }`}
+          >
+            Afër Deadline ({counts.deadline})
+          </button>
 
-        <button
-          onClick={() => setFilter('emergjente')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            filter === 'emergjente' ? 'bg-red-600 text-white shadow-sm' : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-          }`}
-        >
-          Emergjente ({counts.emergjente})
-        </button>
+          <button
+            onClick={() => setFilter('emergjente')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              filter === 'emergjente' ? 'bg-red-600 text-white shadow-sm' : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+            }`}
+          >
+            Emergjente ({counts.emergjente})
+          </button>
 
-        <button
-          onClick={() => setFilter('scheduled')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            filter === 'scheduled' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
-          }`}
-        >
-          E Planifikuar ({counts.scheduled})
-        </button>
+          <button
+            onClick={() => setFilter('scheduled')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              filter === 'scheduled' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+            }`}
+          >
+            E Planifikuar ({counts.scheduled})
+          </button>
 
-        <button
-          onClick={() => setFilter('in_progress')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            filter === 'in_progress' ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
-          }`}
-        >
-          Në Proces ({counts.in_progress})
-        </button>
+          <button
+            onClick={() => setFilter('in_progress')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              filter === 'in_progress' ? 'bg-purple-600 text-white shadow-sm' : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+            }`}
+          >
+            Në Proces ({counts.in_progress})
+          </button>
 
-        <button
-          onClick={() => setFilter('completed')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            filter === 'completed' ? 'bg-green-600 text-white shadow-sm' : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
-          }`}
-        >
-          E Përfunduar ({counts.completed})
-        </button>
+          <button
+            onClick={() => setFilter('completed')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              filter === 'completed' ? 'bg-green-600 text-white shadow-sm' : 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
+            }`}
+          >
+            E Përfunduar ({counts.completed})
+          </button>
 
-        <button
-          onClick={() => setFilter('cancelled')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-            filter === 'cancelled' ? 'bg-slate-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          E Anuluar ({counts.cancelled})
-        </button>
+          <button
+            onClick={() => setFilter('cancelled')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              filter === 'cancelled' ? 'bg-slate-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            E Anuluar ({counts.cancelled})
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 sm:ml-auto border-l border-slate-200 pl-4">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:inline-block">Rendit:</span>
+          <select
+            value={sortBy}
+            onChange={(e: any) => setSortBy(e.target.value)}
+            className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+          >
+            <option value="date_asc">Sipas Orarit (Më të afërtat)</option>
+            <option value="date_desc">Sipas Orarit (Më të largëtat)</option>
+            <option value="created_desc">Të shtuara së fundmi</option>
+          </select>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -192,13 +246,13 @@ export default function VizitatPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
+              {loading && visits.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-slate-400 animate-pulse">
                     Po ngarkohen vizitat...
                   </td>
                 </tr>
-              ) : filteredVisits.map((visit) => (
+              ) : sortedAndFilteredVisits.map((visit) => (
                 <tr key={visit.id} className={`hover:bg-slate-50 transition-colors ${visit.priority === 'emergjente' ? 'bg-red-50/20' : ''}`}>
                   <td className="px-6 py-4">
                     <div className="font-semibold text-slate-900">
@@ -215,7 +269,7 @@ export default function VizitatPage() {
                     </div>
                     <div className="text-xs flex items-center gap-1 text-slate-500 mt-0.5">
                       <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      {visit.patients?.zone_id}
+                      {visit.patients?.zones?.name || 'Zonë e papërcaktuar'}
                     </div>
                   </td>
 
@@ -236,7 +290,6 @@ export default function VizitatPage() {
 
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1.5 items-start">
-                      {/* Këtu thërrasim funksionin që printon statusin në Shqip */}
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         visit.status === 'completed' ? 'bg-green-100 text-green-800' :
                         visit.status === 'in_progress' ? 'bg-purple-100 text-purple-800 animate-pulse' :
@@ -271,7 +324,7 @@ export default function VizitatPage() {
                 </tr>
               ))}
 
-              {!loading && filteredVisits.length === 0 && (
+              {!loading && sortedAndFilteredVisits.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
                     Nuk u gjet asnjë vizitë për këtë filtër.

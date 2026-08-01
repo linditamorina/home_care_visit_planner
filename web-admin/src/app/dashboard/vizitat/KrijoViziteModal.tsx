@@ -3,32 +3,61 @@
 import { useState, useEffect } from 'react'
 import { krijoVizite, merrOraretEZena } from './actions'
 
+// Përditësuam tipin e pacientëve për të pranuar edhe zonën
 type ModalProps = {
-  patients: { id: string, reference_code: string }[]
-  staff: { id: string, full_name: string }[]
+  patients?: { id: string, reference_code: string, zones?: { name: string } }[]
+  teams?: { id: string, name: string, shift_type: string }[]
 }
 
 const ALL_SLOTS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00']
 
-export default function KrijoViziteModal({ patients, staff }: ModalProps) {
+export default function KrijoViziteModal({ patients = [], teams = [] }: ModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success', text: string } | null>(null)
 
-  const [selectedStaff, setSelectedStaff] = useState('')
+  // State-et e reja për filtrimin e pacientëve
+  const [selectedZone, setSelectedZone] = useState('')
+  const [selectedPatient, setSelectedPatient] = useState('')
+  
+  const [selectedTeam, setSelectedTeam] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [bookedSlots, setBookedSlots] = useState<string[]>([])
   const [isFetchingSlots, setIsFetchingSlots] = useState(false)
   
-  // State-i i ri për butonin Toggle (Njoftimi i Pacientit)
   const [isNotified, setIsNotified] = useState(false)
+
+  // 1. Ekstraktojmë të gjitha zonat unike nga lista e pacientëve (pa dublikata)
+  const uniqueZones = Array.from(new Set(patients.map(p => p.zones?.name).filter(Boolean))) as string[]
+
+  // 2. Filtrojmë pacientët bazuar në zonën e zgjedhur
+  const filteredPatients = selectedZone 
+    ? patients.filter(p => p.zones?.name === selectedZone)
+    : patients
+
+  const isSelectedDateWeekend = (dateString: string) => {
+    if (!dateString) return false
+    const date = new Date(dateString)
+    const day = date.getDay()
+    return day === 0 || day === 6
+  }
+
+  const isWeekend = isSelectedDateWeekend(selectedDate)
+
+  const availableTeams = teams.filter(team => {
+    if (isWeekend) {
+      return team.shift_type === 'weekend'
+    } else {
+      return team.shift_type === 'weekday'
+    }
+  })
 
   useEffect(() => {
     async function fetchSlots() {
-      if (selectedStaff && selectedDate) {
+      if (selectedTeam && selectedDate) {
         setIsFetchingSlots(true)
-        const zena = await merrOraretEZena(selectedStaff, selectedDate)
+        const zena = await merrOraretEZena(selectedTeam, selectedDate)
         setBookedSlots(zena)
         setIsFetchingSlots(false)
         setSelectedTime('')
@@ -37,7 +66,7 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
       }
     }
     fetchSlots()
-  }, [selectedStaff, selectedDate])
+  }, [selectedTeam, selectedDate])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -62,9 +91,11 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
         setIsOpen(false)
         setMessage(null)
         setSelectedDate('')
-        setSelectedStaff('')
+        setSelectedTeam('')
         setSelectedTime('')
-        setIsNotified(false) // Rikthejmë toggle-in në gjendjen fillestare
+        setSelectedZone('')
+        setSelectedPatient('')
+        setIsNotified(false)
       }, 1500)
     }
     setIsLoading(false)
@@ -86,7 +117,7 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 sticky top-0 z-10">
               <div>
                 <h3 className="text-lg font-bold text-slate-800">Sistemi i Planifikimit</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Kohëzgjatja menaxhohet automatikisht (60min për vizitën e parë)</p>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Planifikimi i vizitës dhe logjistikës</p>
               </div>
               <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -100,29 +131,49 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
                 </div>
               )}
 
+              {/* Rreshtimi i ri gjeometrik: 2 kolona për çdo rresht */}
               <div className="grid grid-cols-2 gap-5">
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">1. Pacienti</label>
-                  <select name="patient_id" required className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm">
-                    <option value="" className="text-slate-500">-- Zgjidh Kodin e Referencës --</option>
-                    {patients.map(p => <option key={p.id} value={p.id} className="text-slate-900">{p.reference_code}</option>)}
-                  </select>
-                </div>
-
+                
+                {/* 1. Filtri i Zonës (E RE) */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">2. Stafi në Terren</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">1. Filtro sipas Zonës</label>
                   <select 
-                    name="assigned_staff_id" 
-                    required 
-                    value={selectedStaff}
-                    onChange={(e) => setSelectedStaff(e.target.value)}
+                    value={selectedZone}
+                    onChange={(e) => {
+                      setSelectedZone(e.target.value)
+                      setSelectedPatient('') // Kur ndërrohet zona, fshihet pacienti i mëparshëm
+                    }}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
                   >
-                    <option value="" className="text-slate-500">-- Zgjidh Punonjësin --</option>
-                    {staff.map(s => <option key={s.id} value={s.id} className="text-slate-900">{s.full_name}</option>)}
+                    <option value="" className="text-slate-500">-- Të gjitha Zonat --</option>
+                    {uniqueZones.map((zone, index) => (
+                      <option key={index} value={zone} className="text-slate-900">{zone}</option>
+                    ))}
                   </select>
                 </div>
 
+                {/* 2. Zgjedhja e Pacientit */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">2. Zgjidh Pacientin</label>
+                  <select 
+                    name="patient_id" 
+                    required 
+                    value={selectedPatient}
+                    onChange={(e) => setSelectedPatient(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
+                  >
+                    <option value="" className="text-slate-500">
+                      {filteredPatients.length === 0 ? "Nuk ka pacientë në këtë zonë" : "-- Zgjidh Kodin e Referencës --"}
+                    </option>
+                    {filteredPatients.map(p => (
+                      <option key={p.id} value={p.id} className="text-slate-900">
+                        {p.reference_code} {p.zones?.name && !selectedZone ? `(${p.zones.name})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 3. Data e Vizitës */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">3. Data e Vizitës</label>
                   <input 
@@ -130,18 +181,53 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
                     name="visit_date" 
                     required 
                     value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value)
+                      setSelectedTeam('')
+                      setSelectedTime('')
+                    }}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm" 
                   />
                 </div>
 
+                {/* 4. Ekipi në Terren */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">4. Ekipi Operacional</label>
+                  <select 
+                    name="assigned_team_id" 
+                    required 
+                    disabled={!selectedDate}
+                    value={selectedTeam}
+                    onChange={(e) => setSelectedTeam(e.target.value)}
+                    className={`w-full rounded-lg border px-3 py-2.5 text-sm outline-none shadow-sm transition-colors ${
+                      !selectedDate 
+                        ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed' 
+                        : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                    }`}
+                  >
+                    {!selectedDate ? (
+                      <option value="" className="text-slate-500">-- Zgjidh datën --</option>
+                    ) : (
+                      <>
+                        <option value="" className="text-slate-500">-- Zgjidh Ekipin --</option>
+                        {availableTeams.map(team => (
+                          <option key={team.id} value={team.id} className="text-slate-900">
+                            {team.name} {isWeekend ? '(Vikend)' : '(Javore)'}
+                          </option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                {/* 5. Oraret e Lira */}
                 <div className="col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
                   <label className="block text-sm font-semibold text-slate-800 mb-3">
-                    4. Oraret e Lira {isFetchingSlots && <span className="text-blue-500 text-xs ml-2 animate-pulse">Po kontrollohet kalendari...</span>}
+                    5. Oraret e Lira {isFetchingSlots && <span className="text-blue-500 text-xs ml-2 animate-pulse">Po kontrollohet kalendari...</span>}
                   </label>
                   
-                  {!selectedStaff || !selectedDate ? (
-                    <p className="text-sm text-slate-500 text-center py-4 italic">Zgjidhni stafin dhe datën për të parë oraret e disponueshme.</p>
+                  {!selectedTeam || !selectedDate ? (
+                    <p className="text-sm text-slate-500 text-center py-4 italic">Zgjidhni datën dhe ekipin për të parë oraret e disponueshme.</p>
                   ) : (
                     <div className="grid grid-cols-4 gap-3">
                       {ALL_SLOTS.map(slot => {
@@ -170,6 +256,7 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
                   )}
                 </div>
 
+                {/* 6. Kategoria */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Kategoria</label>
                   <select name="care_category" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
@@ -180,6 +267,7 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
                   </select>
                 </div>
 
+                {/* 7. Prioriteti */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Prioriteti</label>
                   <select name="priority" className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none">
@@ -188,9 +276,9 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
                   </select>
                 </div>
 
-                {/* Butoni i Njoftimit (Toggle) */}
-                <div className="col-span-2 pt-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">A është njoftuar pacienti?</label>
+                {/* 8. Butoni i Njoftimit (Toggle) */}
+                <div className="col-span-2 pt-2 border-t border-slate-100">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2 mt-2">A është njoftuar pacienti?</label>
                   <div className="flex items-center">
                     <button
                       type="button"
@@ -209,7 +297,6 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
                       {isNotified ? 'Po, pacienti ka konfirmuar vizitën' : 'Jo, pacienti nuk është kontaktuar ende'}
                     </span>
                   </div>
-                  {/* Kjo fushë e fshehur kalon të dhënën në Form Data kur shtypet Ruaj */}
                   <input type="hidden" name="is_patient_notified" value={isNotified ? 'true' : 'false'} />
                 </div>
               </div>
@@ -218,7 +305,7 @@ export default function KrijoViziteModal({ patients, staff }: ModalProps) {
                 <button type="button" onClick={() => setIsOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
                   Anulo
                 </button>
-                <button type="submit" disabled={isLoading || !selectedTime} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
+                <button type="submit" disabled={isLoading || !selectedTime || !selectedPatient} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm">
                   {isLoading ? 'Po planifikohet...' : 'Ruaj Vizitën'}
                 </button>
               </div>
