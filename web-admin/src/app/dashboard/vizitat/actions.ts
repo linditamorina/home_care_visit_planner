@@ -13,8 +13,9 @@ export async function merrOraretEZena(team_id: string, date: string) {
   const { data, error } = await supabase
     .from('visits')
     .select('scheduled_start')
-    .eq('assigned_team_id', team_id) // Ndryshuar nga staff në team
+    .eq('assigned_team_id', team_id) 
     .neq('status', 'cancelled')
+    .neq('care_category', 'Laborator') // <--- ZGJIDHJA 1: Injoro vizitat e laborantit nga butonat gri
     .gte('scheduled_start', startOfDay)
     .lte('scheduled_start', endOfDay)
 
@@ -45,7 +46,7 @@ export async function krijoVizite(formData: FormData) {
   const supabase = await createClient()
 
   const patient_id = formData.get('patient_id') as string
-  const assigned_team_id = formData.get('assigned_team_id') as string // Ndryshuar nga staff
+  const assigned_team_id = formData.get('assigned_team_id') as string 
   const visit_date = formData.get('visit_date') as string 
   const visit_time = formData.get('visit_time') as string 
   const priority = formData.get('priority') as string
@@ -64,11 +65,13 @@ export async function krijoVizite(formData: FormData) {
   const scheduled_start = startDateTime.toISOString()
   const scheduled_end = endDateTime.toISOString()
 
+  // Kontrolli i konfliktit në databazë
   const { data: conflicts } = await supabase
     .from('visits')
     .select('id')
     .eq('assigned_team_id', assigned_team_id)
     .neq('status', 'cancelled')
+    .neq('care_category', 'Laborator') // <--- ZGJIDHJA 2: Injoro laborantin në llogaritjen e mbivendosjes (overlap)
     .lt('scheduled_start', scheduled_end)
     .gt('scheduled_end', scheduled_start)
 
@@ -80,7 +83,7 @@ export async function krijoVizite(formData: FormData) {
     .from('visits')
     .insert([{
       patient_id,
-      assigned_team_id, // Ruajmë Ekipin
+      assigned_team_id, 
       scheduled_start,
       scheduled_end,
       priority,

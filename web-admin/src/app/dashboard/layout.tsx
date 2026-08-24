@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { logoutAction } from './actions'
 import NavLinks from './NavLinks' 
+import LogoutButton from './LogoutButton'
+import SupervisorNotifications from './SupervisorNotifications' // <-- Importi i Ri
 
 export default async function DashboardLayout({
   children,
@@ -39,6 +40,8 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-slate-50">
+      
+      {/* SIDEBAR-i mbetet 100% i paprekur dhe solid */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
           <span className="text-xl font-bold tracking-wider text-blue-400">VIZI<span className="text-white">TRACK</span></span>
@@ -61,20 +64,21 @@ export default async function DashboardLayout({
               </p>
             </div>
           </div>
-          <form action={logoutAction}>
-            <button type="submit" className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 rounded-lg transition-all">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-              Dil nga sistemi
-            </button>
-          </form>
+          
+          <LogoutButton />
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* <header className="h-16 bg-white border-b border-slate-200 flex items-center px-8 shadow-sm">
-          <h1 className="text-xl font-semibold text-slate-800">Paneli Administrativ</h1>
-        </header> */}
-        <div className="flex-1 overflow-auto p-8">
+      {/* Pjesa Kryesore (Main) */}
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        
+        {/* HEADER TRANSPARENT ME ZILEN LART DJATHTAS */}
+        <div className="w-full flex justify-end px-8 pt-6 pb-2 sticky top-0 z-40 bg-slate-50">
+          <SupervisorNotifications />
+        </div>
+
+        {/* Kontenieri i faqeve (fëmijëve). Padding-u i sipërm zvogëlohet për shkak të header-it transparent */}
+        <div className="flex-1 overflow-auto px-8 pb-8">
           {children}
         </div>
       </main>

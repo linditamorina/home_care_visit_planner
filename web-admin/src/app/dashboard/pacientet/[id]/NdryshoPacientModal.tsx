@@ -134,7 +134,7 @@ export default function NdryshoPacientModal({ patient }: { patient: any }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Kushte të Tjera Mjekësore <span className="text-slate-400 font-normal">(Opsionale)</span></label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Sëmundjet e Njohura <span className="text-slate-400 font-normal">(Opsionale)</span></label>
                     <textarea value={conditions} onChange={(e) => setConditions(e.target.value)} placeholder="Sëmundje kronike, ndërhyrje të mëparshme..." rows={3} className={inputClassName.replace("py-2", "py-3")} />
                   </div>
                 </div>

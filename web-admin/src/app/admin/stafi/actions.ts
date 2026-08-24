@@ -148,18 +148,41 @@ export async function ndryshoStaf(formData: FormData) {
   return { success: true }
 }
 
-// export async function gjeneroEkipetBaze() {
-//   const supabaseAdmin = createClient(
-//     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//     process.env.SUPABASE_SERVICE_ROLE_KEY!
-//   )
+// === FUNKSIONI I RI PËR KRIJIMIN E EKIPEVE ===
+export async function shtoEkip(formData: FormData) {
+  const name = formData.get('name') as string
+  const shift_type = formData.get('shift_type') as string
 
-//   await supabaseAdmin.from('teams').insert([
-//     { name: 'Ekipi 1', shift_type: 'weekday' },
-//     { name: 'Ekipi 2', shift_type: 'weekday' },
-//     { name: 'Ekipi 3', shift_type: 'weekday' },
-//     { name: 'Ekipi i Vikendit', shift_type: 'weekend' },
-//   ])
+  if (!name || !shift_type) {
+    return { error: 'Të gjitha fushat e ekipit janë të detyrueshme.' }
+  }
 
-//   revalidatePath('/admin/stafi')
-// }
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // Kontrollojmë mos ekziston një ekip me të njëjtin emër (case-insensitive)
+  const { data: existingTeam } = await supabaseAdmin
+    .from('teams')
+    .select('id')
+    .ilike('name', name.trim())
+    .maybeSingle()
+
+  if (existingTeam) {
+    return { error: 'Një ekip me këtë emër ekziston tashmë në sistem.' }
+  }
+
+  const { error } = await supabaseAdmin
+    .from('teams')
+    .insert([{ name: name.trim(), shift_type }])
+
+  if (error) {
+    return { error: `Gabim në databazë: ${error.message}` }
+  }
+
+  revalidatePath('/admin/stafi')
+  revalidatePath('/dashboard/vizitat')
+  
+  return { success: true }
+}

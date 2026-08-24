@@ -206,7 +206,7 @@ export default function KrijoViziteModal({ patients = [], teams = [] }: ModalPro
                     }`}
                   >
                     {!selectedDate ? (
-                      <option value="" className="text-slate-500">-- Zgjidh datën --</option>
+                      <option value="" className="text-slate-500">-- Zgjidh Ekipin --</option>
                     ) : (
                       <>
                         <option value="" className="text-slate-500">-- Zgjidh Ekipin --</option>

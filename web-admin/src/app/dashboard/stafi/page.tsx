@@ -11,37 +11,6 @@ export default function MenaxhimiEkipeve() {
 
   const supabase = createClient()
 
-  // 1. Funksioni për tërheqjen e të dhënave të rifreskuara
-  // async function loadData() {
-  //   // Tërheqim Ekipet
-  //   const { data: teams } = await supabase
-  //     .from('teams')
-  //     .select(`
-  //       id, 
-  //       name, 
-  //       shift_type,
-  //       users (id, full_name, profession)
-  //     `)
-  //     .order('name', { ascending: true })
-
-  //   // Tërheqim Vizitat e SOTME
-  //   const startOfDay = new Date()
-  //   startOfDay.setHours(0, 0, 0, 0)
-  //   const endOfDay = new Date()
-  //   endOfDay.setHours(23, 59, 59, 999)
-
-  //   const { data: todayVisits } = await supabase
-  //     .from('visits')
-  //     .select('*, patients(reference_code, zones(name))')
-  //     .gte('scheduled_start', startOfDay.toISOString())
-  //     .lte('scheduled_start', endOfDay.toISOString())
-  //     .order('scheduled_start', { ascending: true })
-
-  //   setTeamsList(teams || [])
-  //   setVisitsList(todayVisits || [])
-  //   setLoading(false)
-  // }
-
   async function loadData() {
     // Tërheqim Ekipet
     const { data: teams } = await supabase
@@ -54,28 +23,24 @@ export default function MenaxhimiEkipeve() {
       `)
       .order('name', { ascending: true })
 
-    // TESTIM: Tërheqim TË GJITHA vizitat pa filtër datash, për të parë nëse shfaqen
+    // Tërheqim TË GJITHA vizitat
     const { data: todayVisits } = await supabase
       .from('visits')
       .select('*, patients(reference_code, zones(name))')
       .order('scheduled_start', { ascending: true })
-
-    console.log('Të gjitha vizitat e tërhequra:', todayVisits) // Shiko Console në F12
 
     setTeamsList(teams || [])
     setVisitsList(todayVisits || [])
     setLoading(false)
   }
 
-  // 2. Lidhja Real-Time (Magjia e Live Tracking)
+  // Lidhja Real-Time
   useEffect(() => {
-    loadData() // Ngarkimi fillestar
+    loadData() 
 
     const channel = supabase
       .channel('stafi-live-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => {
-        // Kurdo që ndodh një ndryshim në databazë (p.sh. vizita bëhet e përfunduar),
-        // ky funksion rithirret dhe kartat përditësohen vetvetiu!
         loadData() 
       })
       .subscribe()
@@ -92,7 +57,9 @@ export default function MenaxhimiEkipeve() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] max-w-7xl mx-auto w-full">
+    // ZGJIDHJA 1: Hoqëm lartësinë e detyruar "100vh" dhe vendosëm "flex-1 min-h-0 h-full"
+    // Kjo e detyron kontejnerin të marrë vetëm hapësirën e lirë pa u derdhur jashtë
+    <div className="flex flex-col h-full min-h-0 max-w-7xl mx-auto w-full">
       
       {/* HEADER */}
       <div className="flex-none flex justify-between items-end border-b border-slate-200 pb-4 mb-6">
@@ -121,7 +88,8 @@ export default function MenaxhimiEkipeve() {
       </div>
 
       {/* KONTEJNERI I KARTAVE */}
-      <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+      {/* ZGJIDHJA 2: Këtu ruhet overflow-y-auto që ky bllok të shërbejë si i vetmi Scroll */}
+      <div className="flex-1 overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
         
         {loading ? (
           <div className="flex items-center justify-center h-40">
@@ -132,7 +100,7 @@ export default function MenaxhimiEkipeve() {
             Nuk ka ekipe të konfiguruara.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {teamsList.map((team) => {
               const teamVisits = visitsList.filter(v => v.assigned_team_id === team.id)
               const teamZones = getTeamZones(teamVisits)
@@ -142,7 +110,7 @@ export default function MenaxhimiEkipeve() {
                   key={team.id} 
                   team={team} 
                   visits={teamVisits} 
-                  zones={teamZones} 
+                  zones={teamZones as string[]} 
                 />
               )
             })}
