@@ -23,6 +23,8 @@ export default function PacientetPage() {
       .order('created_at', { ascending: false })
 
     if (!error && data) {
+      // DEBUG: Shiko në Console (F12) nëse objekti i pacientit e ka kolonën 'id' apo quhet ndryshe (psh. 'pacient_id')
+      console.log("Të dhënat nga Supabase:", data) 
       setPatients(data)
     } else if (error) {
       console.error("Gabim gjatë marrjes së pacientëve:", error)
@@ -45,7 +47,8 @@ export default function PacientetPage() {
 
   // NDRYSHIMI: Filtrojmë duke përdorur p.zones.name në vend të p.zone_id
   const filteredPatients = patients.filter(patient => {
-    const matchesSearch = patient.reference_code.toLowerCase().includes(searchQuery.toLowerCase())
+    // Shtuar opsional chaining (?.) tek reference_code për të parandaluar crash nëse është null
+    const matchesSearch = patient.reference_code?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false
     const matchesZone = zoneFilter === 'all' || patient.zones?.name === zoneFilter
     return matchesSearch && matchesZone
   })
@@ -116,8 +119,8 @@ export default function PacientetPage() {
                     Duke ngarkuar pacientët...
                   </td>
                 </tr>
-              ) : filteredPatients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-slate-50 transition-colors">
+              ) : filteredPatients.map((patient, index) => (
+                <tr key={patient.id || index} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 font-semibold text-slate-800">
                     {patient.reference_code}
                   </td>
@@ -129,7 +132,6 @@ export default function PacientetPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1.5 text-slate-600">
                       <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      {/* NDRYSHIMI: Afishojmë emrin e zonës nga lidhja */}
                       {patient.zones?.name || 'Pa zonë'}
                     </div>
                   </td>
@@ -146,6 +148,14 @@ export default function PacientetPage() {
                     <Link 
                       href={`/dashboard/pacientet/${patient.id}`}
                       className="text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors"
+                      onClick={(e) => {
+                        // Kjo pengon 404-ën dhe të tregon nëse ID mungon vërtet
+                        if (!patient.id) {
+                          e.preventDefault();
+                          alert(`Gabim: Ky pacient (${patient.reference_code}) nuk ka ID. Kontrollo Console!`);
+                          console.error("Pacienti pa ID:", patient);
+                        }
+                      }}
                     >
                       Shiko Historikun &rarr;
                     </Link>

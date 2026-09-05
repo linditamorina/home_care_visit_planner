@@ -8,6 +8,7 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // 1. Inicializimi i Supabase SSR Client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -34,45 +35,57 @@ export async function middleware(request: NextRequest) {
     }
   )
 
- // ... kodi ekzistues sipër mbetet i njëjtë
-
-  const { data: { session } } = await supabase.auth.getSession()
+  // 2. Siguria Absolute: Përdorim getUser() për verifikim të padiskutueshëm server-side
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
   const path = request.nextUrl.pathname
 
   const isDashboardRoute = path.startsWith('/dashboard')
   const isAdminRoute = path.startsWith('/admin')
+  const isAuthRoute = path.startsWith('/login')
+  
   const isProtectedRoute = isDashboardRoute || isAdminRoute
 
-  // 1. Mbrojtja e Rrugëve Private
-  if (!session && isProtectedRoute) {
+  // 3. Mbrojtja e Rrugëve Private (Nëse NUK ka User -> kthe te Login)
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // 2. Menaxhimi i Roleve nëse përdoruesi është i kyçur
-  if (session) {
-    // Lexojmë rolin direkt nga databaza për të mos lejuar manipulime nga klienti
+  // 4. Logjika e Roleve (Nëse KEMI një përdorues valid)
+  if (user && !userError) {
+    // Lexojmë rolin direkt nga databaza për të mos lejuar manipulime
     const { data: userData } = await supabase
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
 
     const role = userData?.role
 
-    // Nëse është në /login, e kthejmë te paneli i tij
-    if (path === '/login') {
+    // Nëse është i kyçur dhe tenton të hapë faqen /login, ridrejtoje sipas rolit
+    if (isAuthRoute) {
       if (role === 'admin') return NextResponse.redirect(new URL('/admin', request.url))
       if (role === 'supervisor') return NextResponse.redirect(new URL('/dashboard', request.url))
+      
       // Punonjësit e terrenit nuk duhet të kalojnë përtej login në web
       await supabase.auth.signOut()
       return response
     }
 
-    // RBAC: Ndalimi i Supervizorit të hyjë te Admin
+    // RBAC (Role-Based Access Control):
+    // Supervizori nuk mund të futet asnjëherë te /admin
     if (isAdminRoute && role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // Punonjësit e terrenit bllokohen totalisht nga Web-i (përdorin vetëm mobile)
+    if (isProtectedRoute && role !== 'admin' && role !== 'supervisor') {
+      await supabase.auth.signOut()
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
     }
   }
 
@@ -81,6 +94,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    /*
+     * Përputhet me të gjitha rrugët, PËRVEÇ:
+     * - Rrugët API (_next/static, _next/image, favicon.ico)
+     * - Asistencës grafike dhe skedarëve (svg, png, jpg, etj)
+     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
