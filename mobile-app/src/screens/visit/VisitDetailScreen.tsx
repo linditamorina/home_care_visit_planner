@@ -461,7 +461,7 @@ export default function VisitDetailScreen() {
 
       if (notifTitle) {
         await supabase.from('notifications').insert([
-          { target_role: 'admin', visit_id: visitId, patient_code: patientData?.reference_code || 'Pacient', title: notifTitle, message: notifMessage },
+          // { target_role: 'admin', visit_id: visitId, patient_code: patientData?.reference_code || 'Pacient', title: notifTitle, message: notifMessage },
           { target_role: 'supervisor', visit_id: visitId, patient_code: patientData?.reference_code || 'Pacient', title: notifTitle, message: notifMessage }
         ]);
       }

@@ -40,16 +40,16 @@ export async function middleware(request: NextRequest) {
   
   const path = request.nextUrl.pathname
 
-  const isDashboardRoute = path.startsWith('/dashboard')
-  const isAdminRoute = path.startsWith('/admin')
-  const isAuthRoute = path.startsWith('/login')
+  const isDashboardRoute = path.startsWith('../dashboard')
+  const isAdminRoute = path.startsWith('../admin')
+  const isAuthRoute = path.startsWith('../login')
   
   const isProtectedRoute = isDashboardRoute || isAdminRoute
 
   // 3. Mbrojtja e Rrugëve Private (Nëse NUK ka User -> kthe te Login)
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = '../login'
     return NextResponse.redirect(url)
   }
 

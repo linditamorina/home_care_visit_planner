@@ -7,47 +7,6 @@ import HistorikuVizitave from "./HistorikuVizitave";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// export default async function DetajetEPacientit({
-//   params,
-// }: {
-//   params: Promise<{ id: string }>;
-// }) {
-//   const resolvedParams = await params;
-//   const patientId = resolvedParams.id;
-
-//   if (!patientId || patientId === "undefined") notFound();
-
-//   const supabase = await createClient();
-
-//   // 1. Marrim Profilin dhe bëjmë lidhjen me tabelën zones
-//   const { data: patient } = await supabase
-//     .from("patients")
-//     .select("*, zones(name)") // <-- NDRYSHIMI KËTU
-//     .eq("id", patientId)
-//     .maybeSingle();
-
-//   if (!patient) notFound();
-
-//   // 2. Marrim Vizitat
-//   // const { data: visits } = await supabase
-//   //   .from("visits")
-//   //   .select(`*, users!assigned_staff_id (full_name)`)
-//   //   .eq("patient_id", patient.id)
-//   //   .order("scheduled_start", { ascending: false });
-
-//   const { data: visits } = await supabase
-//   .from('visits')
-//   .select(`
-//     *,
-//     users ( full_name ),
-//     teams ( name ), 
-//     field_notes (*)
-//   `)
-//   .eq('patient_id', params.id)
-//   .order('scheduled_start', { ascending: false });
-
-//   const visitsList = visits || [];
-
 export default async function DetajetEPacientit({
   params,
 }: {
@@ -59,10 +18,13 @@ export default async function DetajetEPacientit({
 
   const supabase = await createClient();
 
-  // 2. Tërheqim pacientin
+  // 2. Tërheqim pacientin DHE bëjmë JOIN me tabelën zones
   const { data: patient } = await supabase
     .from("patients")
-    .select("*")
+    .select(`
+      *,
+      zones ( name )
+    `)
     .eq("id", patientId)
     .single();
 
@@ -81,7 +43,8 @@ export default async function DetajetEPacientit({
     .order("scheduled_start", { ascending: false });
 
   const visitsList = visits || [];
-  // 3. Marrim Raportet Klinike vetëm për këto vizita
+  
+  // 4. Marrim Raportet Klinike vetëm për këto vizita
   const fieldNotesMap: Record<string, any> = {};
   if (visitsList.length > 0) {
     const visitIds = visitsList.map((v: any) => v.id);
@@ -136,16 +99,13 @@ export default async function DetajetEPacientit({
           <h3 className="text-sm font-bold text-slate-800 uppercase mb-4">
             📍 Lokacioni
           </h3>
-          {/* NDRYSHIMI KËTU: Tregojmë emrin e zonës */}
           <p className="text-slate-900 font-medium">
+            {/* Tani patient.zones.name do të shfaqet saktë */}
             {patient.zones?.name || "Zonë e panjohur"}
           </p>
           <p className="text-slate-500 text-sm mt-1">{patient.address}</p>
         </div>
-        {/* <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <h3 className="text-sm font-bold text-slate-800 uppercase mb-4">⚕️ Kushtet Mjekësore & Alergjitë</h3>
-          <p className="text-slate-900 font-medium">{patient.medical_conditions || 'Nuk ka të dhëna'}</p>
-        </div> */}
+        
         {/* Karta e Alergjive */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-3">

@@ -9,7 +9,8 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Alert
+  Alert,
+  Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,13 +20,17 @@ import { supabase } from '../../lib/supabase';
 export default function ProfileScreen() {
   const { user } = useAuth();
   
+  // States për modalet
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [securityModalVisible, setSecurityModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
-  
   const [successModalVisible, setSuccessModalVisible] = useState(false);
-  const [isRequesting, setIsRequesting] = useState(false);
   
+  // States për modulet e reja të suportit
+  const [manualModalVisible, setManualModalVisible] = useState(false);
+  const [contactModalVisible, setContactModalVisible] = useState(false);
+
+  const [isRequesting, setIsRequesting] = useState(false);
   const [profileData, setProfileData] = useState<{ full_name: string; profession: string } | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -86,13 +91,28 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSupportAction = (type: string) => {
+  // Logjika Profesionale e Suportit
+  const handleSupportAction = (type: 'manual' | 'contact') => {
     setSupportModalVisible(false);
-    Alert.alert(
-      "Në Zhvillim",
-      `Moduli "${type}" është në fazë integrimi dhe do të jetë i disponueshëm në përditësimin e radhës.`,
-      [{ text: "Kuptova", style: "cancel" }]
-    );
+    setTimeout(() => {
+      if (type === 'manual') setManualModalVisible(true);
+      if (type === 'contact') setContactModalVisible(true);
+    }, 300);
+  };
+
+  // Funksionet native për thirrje dhe email
+  const handleCallIT = () => {
+    Linking.openURL('tel:+38349123456').catch(() => {
+      Alert.alert("Gabim", "Pajisja juaj nuk mund të kryejë thirrje telefonike.");
+    });
+  };
+
+  const handleEmailIT = () => {
+    const subject = encodeURIComponent("Kërkesë për Suport - ViziTrack App");
+    const body = encodeURIComponent(`Përshëndetje IT,\n\nKam një problem me aplikacionin.\nPërdoruesi: ${profileData?.full_name || user?.email}\n\n[Përshkruani problemin këtu]`);
+    Linking.openURL(`mailto:support@vizitrack.com?subject=${subject}&body=${body}`).catch(() => {
+      Alert.alert("Gabim", "Nuk keni asnjë aplikacion emaili të instaluar.");
+    });
   };
 
   return (
@@ -115,7 +135,7 @@ export default function ProfileScreen() {
               <>
                 <Text style={styles.fullNameText} numberOfLines={1}>{profileData?.full_name || 'Përdorues i panjohur'}</Text>
                 <Text style={styles.emailText} numberOfLines={1}>{user?.email}</Text>
-                <View style={styles.roleBadge}><Text style={styles.roleText}>{profileData?.profession || 'Punëtor në Terren'}</Text></View>
+                <View style={styles.roleBadge}><Text style={styles.roleText}>{profileData?.profession?.replace('_', ' ') || 'Punëtor në Terren'}</Text></View>
               </>
             )}
           </View>
@@ -142,7 +162,7 @@ export default function ProfileScreen() {
         <Text style={styles.versionText}>ViziTrack v1.0.0</Text>
       </ScrollView>
 
-      {/* MODALET */}
+      {/* MODALET E VJETRA */}
       <Modal animationType="fade" transparent={true} visible={logoutModalVisible} onRequestClose={() => setLogoutModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -177,7 +197,6 @@ export default function ProfileScreen() {
             <View style={[styles.modalIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}><Ionicons name="checkmark-circle-outline" size={40} color="#10b981" /></View>
             <Text style={styles.modalTitle}>Kërkesa u Dërgua!</Text>
             <Text style={styles.modalText}>Administratori i sistemit u njoftua. Do të kontaktoheni së shpejti për të verifikuar identitetin tuaj.</Text>
-            {/* KËTU ISHTE PROBLEMI: Tani është mbështjellë saktë */}
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalBtn, {backgroundColor: '#10b981'}]} onPress={() => setSuccessModalVisible(false)}>
                 <Text style={[styles.confirmBtnText, {color: '#ffffff'}]}>Në rregull</Text>
@@ -196,10 +215,104 @@ export default function ProfileScreen() {
               <Text style={[styles.modalText, {marginBottom: 0, color: '#94a3b8'}]}>Si mund t'ju ndihmojmë sot?</Text>
             </View>
             <View style={styles.supportOptionsList}>
-              <TouchableOpacity style={styles.supportOptionBtn} onPress={() => handleSupportAction('Manuali i Përdorimit')}><View style={[styles.supportIconBg, {backgroundColor: 'rgba(16, 185, 129, 0.1)'}]}><Ionicons name="book-outline" size={22} color="#10b981" /></View><View style={styles.supportOptionTextContainer}><Text style={styles.supportOptionTitle}>Manuali i Përdorimit</Text><Text style={styles.supportOptionSubtitle}>Udhëzime mbi përdorimin e ViziTrack</Text></View><Ionicons name="chevron-forward" size={18} color="#64748b" /></TouchableOpacity>
-              <TouchableOpacity style={[styles.supportOptionBtn, {borderBottomWidth: 0}]} onPress={() => handleSupportAction('Kontakto IT / Chatbot')}><View style={[styles.supportIconBg, {backgroundColor: 'rgba(139, 92, 246, 0.1)'}]}><Ionicons name="chatbubbles-outline" size={22} color="#8b5cf6" /></View><View style={styles.supportOptionTextContainer}><Text style={styles.supportOptionTitle}>Kontakto IT / Chatbot</Text><Text style={styles.supportOptionSubtitle}>Asistencë e drejtpërdrejtë për sistemin</Text></View><Ionicons name="chevron-forward" size={18} color="#64748b" /></TouchableOpacity>
+              <TouchableOpacity style={styles.supportOptionBtn} onPress={() => handleSupportAction('manual')}>
+                <View style={[styles.supportIconBg, {backgroundColor: 'rgba(16, 185, 129, 0.1)'}]}><Ionicons name="book-outline" size={22} color="#10b981" /></View>
+                <View style={styles.supportOptionTextContainer}>
+                  <Text style={styles.supportOptionTitle}>Manuali i Përdorimit</Text>
+                  <Text style={styles.supportOptionSubtitle}>Udhëzime mbi përdorimin e ViziTrack</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#64748b" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={[styles.supportOptionBtn, {borderBottomWidth: 0}]} onPress={() => handleSupportAction('contact')}>
+                <View style={[styles.supportIconBg, {backgroundColor: 'rgba(139, 92, 246, 0.1)'}]}><Ionicons name="chatbubbles-outline" size={22} color="#8b5cf6" /></View>
+                <View style={styles.supportOptionTextContainer}>
+                  <Text style={styles.supportOptionTitle}>Kontakto IT</Text>
+                  <Text style={styles.supportOptionSubtitle}>Asistencë teknike për sistemin</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#64748b" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.supportCloseBtn} onPress={() => setSupportModalVisible(false)}><Text style={styles.supportCloseBtnText}>Kthehu</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.supportCloseBtn} onPress={() => setSupportModalVisible(false)}><Text style={styles.supportCloseBtnText}>Mbyll</Text></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* --- MODALET E REJA PROFESIONALE --- */}
+      
+      {/* 1. Modali i Manualit të Përdorimit */}
+      <Modal animationType="slide" transparent={true} visible={manualModalVisible} onRequestClose={() => setManualModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { padding: 0, overflow: 'hidden', maxHeight: '80%' }]}>
+            <View style={styles.supportHeader}>
+              <Ionicons name="book" size={28} color="#10b981" style={{marginBottom: 8}} />
+              <Text style={styles.modalTitle}>Manuali i Terrenit</Text>
+            </View>
+            <ScrollView style={{ width: '100%', padding: 20 }} showsVerticalScrollIndicator={false}>
+              
+              <View style={styles.manualBlock}>
+                <View style={styles.manualTitleRow}>
+                  <Ionicons name="location" size={18} color="#38bdf8" />
+                  <Text style={styles.manualTitle}>1. Kryerja e Vizitës</Text>
+                </View>
+                <Text style={styles.manualDesc}>Pasi të mbërrini te pacienti, shtypni <Text style={{fontWeight: 'bold', color: '#38bdf8'}}>Check-In</Text> për të regjistruar lokacionin dhe orën. Pasi të përfundoni, shtypni <Text style={{fontWeight: 'bold', color: '#10b981'}}>Check-Out</Text>.</Text>
+              </View>
+
+              <View style={styles.manualBlock}>
+                <View style={styles.manualTitleRow}>
+                  <Ionicons name="cloud-offline" size={18} color="#f59e0b" />
+                  <Text style={styles.manualTitle}>2. Puna Jashtë Linje (Offline)</Text>
+                </View>
+                <Text style={styles.manualDesc}>Nëse nuk keni internet, ViziTrack ruan automatikisht të dhënat në telefon. Një shirit portokalli do t'ju njoftojë. Kur të keni sërish rrjet, të dhënat dërgohen automatikisht në server.</Text>
+              </View>
+
+              <View style={styles.manualBlock}>
+                <View style={styles.manualTitleRow}>
+                  <Ionicons name="document-text" size={18} color="#a78bfa" />
+                  <Text style={styles.manualTitle}>3. Raportet Digjitale</Text>
+                </View>
+                <Text style={styles.manualDesc}>Vetëm pasi të plotësoni raportin tuaj digjital nga butoni <Text style={{fontWeight: 'bold', color: '#a78bfa'}}>"Shto Shënime"</Text>, vizita mund të mbyllet plotësisht nga Ekipi.</Text>
+              </View>
+
+            </ScrollView>
+            <TouchableOpacity style={styles.supportCloseBtn} onPress={() => setManualModalVisible(false)}><Text style={styles.supportCloseBtnText}>Kthehu</Text></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 2. Modali i Kontaktit me IT */}
+      <Modal animationType="fade" transparent={true} visible={contactModalVisible} onRequestClose={() => setContactModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { padding: 0, overflow: 'hidden' }]}>
+            <View style={styles.supportHeader}>
+              <Ionicons name="hardware-chip" size={32} color="#8b5cf6" style={{marginBottom: 8}} />
+              <Text style={styles.modalTitle}>Departamenti IT</Text>
+              <Text style={[styles.modalText, {marginBottom: 0, color: '#94a3b8'}]}>Oraret e suportit: 08:00 - 16:00</Text>
+            </View>
+            
+            <View style={{ width: '100%', padding: 24, gap: 16 }}>
+              <TouchableOpacity style={styles.contactBtnCard} onPress={handleCallIT}>
+                <View style={[styles.contactIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                  <Ionicons name="call" size={20} color="#10b981" />
+                </View>
+                <View>
+                  <Text style={styles.contactLabel}>Thirrje Emergjente</Text>
+                  <Text style={styles.contactValue}>+383 49 123 456</Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.contactBtnCard} onPress={handleEmailIT}>
+                <View style={[styles.contactIconCircle, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
+                  <Ionicons name="mail" size={20} color="#38bdf8" />
+                </View>
+                <View>
+                  <Text style={styles.contactLabel}>Raporto një problem</Text>
+                  <Text style={styles.contactValue}>support@vizitrack.com</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.supportCloseBtn} onPress={() => setContactModalVisible(false)}><Text style={styles.supportCloseBtnText}>Kthehu</Text></TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -219,7 +332,7 @@ const styles = StyleSheet.create({
   fullNameText: { fontSize: 18, fontWeight: 'bold', color: '#ffffff', marginBottom: 2 },
   emailText: { fontSize: 13, color: '#94a3b8', marginBottom: 8 },
   roleBadge: { backgroundColor: '#0f172a', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  roleText: { fontSize: 12, color: '#38bdf8', fontWeight: 'bold' },
+  roleText: { fontSize: 12, color: '#38bdf8', fontWeight: 'bold', textTransform: 'capitalize' },
   optionsContainer: { marginBottom: 30 },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, marginLeft: 4 },
   optionRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', padding: 16, borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
@@ -249,5 +362,16 @@ const styles = StyleSheet.create({
   supportOptionTitle: { color: '#ffffff', fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
   supportOptionSubtitle: { color: '#94a3b8', fontSize: 12 },
   supportCloseBtn: { width: '100%', paddingVertical: 16, backgroundColor: '#0f172a', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#334155' },
-  supportCloseBtnText: { color: '#cbd5e1', fontSize: 15, fontWeight: 'bold' }
+  supportCloseBtnText: { color: '#cbd5e1', fontSize: 15, fontWeight: 'bold' },
+
+  // Stilet e reja për modulet e suportit
+  manualBlock: { marginBottom: 20, backgroundColor: '#0f172a', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#334155' },
+  manualTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  manualTitle: { color: '#ffffff', fontSize: 15, fontWeight: 'bold', marginLeft: 8 },
+  manualDesc: { color: '#94a3b8', fontSize: 13, lineHeight: 20 },
+
+  contactBtnCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0f172a', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#334155' },
+  contactIconCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  contactLabel: { color: '#94a3b8', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  contactValue: { color: '#ffffff', fontSize: 15, fontWeight: 'bold' }
 });
