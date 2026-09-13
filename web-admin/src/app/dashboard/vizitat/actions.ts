@@ -2,29 +2,34 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
+import { zonedTimeToUtc, localDateKey, localTimeKey } from '@/utils/timezone'
 
 // 1. Funksioni për të marrë oraret e zëna për një datë (Përshtatur për Ekip)
 export async function merrOraretEZena(team_id: string, date: string) {
   const supabase = await createClient()
-  
-  const startOfDay = new Date(`${date}T00:00:00`).toISOString()
-  const endOfDay = new Date(`${date}T23:59:59`).toISOString()
+
+  // Marrim një dritare 48-orëshe rreth datës (në UTC) dhe më pas filtrojmë saktësisht
+  // sipas datës kalendarike në zonën kohore të biznesit (shih utils/timezone.ts) — kështu
+  // shmangim varësinë nga zona kohore e vetë procesit të serverit.
+  const windowStart = zonedTimeToUtc(date, '00:00')
+  windowStart.setUTCDate(windowStart.getUTCDate() - 1)
+  const windowEnd = zonedTimeToUtc(date, '00:00')
+  windowEnd.setUTCDate(windowEnd.getUTCDate() + 2)
 
   const { data, error } = await supabase
     .from('visits')
     .select('scheduled_start')
-    .eq('assigned_team_id', team_id) 
+    .eq('assigned_team_id', team_id)
     .neq('status', 'cancelled')
     .neq('care_category', 'Laborator') // <--- ZGJIDHJA 1: Injoro vizitat e laborantit nga butonat gri
-    .gte('scheduled_start', startOfDay)
-    .lte('scheduled_start', endOfDay)
+    .gte('scheduled_start', windowStart.toISOString())
+    .lte('scheduled_start', windowEnd.toISOString())
 
   if (error || !data) return []
 
-  return data.map(visit => {
-    const d = new Date(visit.scheduled_start)
-    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  })
+  return data
+    .filter(visit => localDateKey(visit.scheduled_start) === date)
+    .map(visit => localTimeKey(visit.scheduled_start))
 }
 
 // 2. Verifikimi nëse është vizita e parë
@@ -57,7 +62,7 @@ export async function krijoVizite(formData: FormData) {
     return { error: 'Të gjitha fushat kryesore janë të detyrueshme.' }
   }
 
-  const startDateTime = new Date(`${visit_date}T${visit_time}:00`)
+  const startDateTime = zonedTimeToUtc(visit_date, visit_time)
   const isFirst = await eshteVizitaEPare(patient_id)
   const durationMinutes = isFirst ? 60 : 45
   const endDateTime = new Date(startDateTime.getTime() + durationMinutes * 60000)
