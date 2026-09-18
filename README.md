@@ -24,7 +24,14 @@ Traditional home care visit organization suffers from a lack of real-time synchr
 * **Mobile App:** React Native with TypeScript.
 * **Admin Dashboard (Web):** Next.js with TypeScript.
 * **Backend & Database:** Supabase (PostgreSQL).
-* **Automated Testing:** Playwright for End-to-End (E2E) testing flows.
+* **Automated Testing:** Playwright for End-to-End (E2E) testing flows (29 test cases — see [docs/TESTING.md](docs/TESTING.md)).
+
+---
+
+## Documentation
+* [Architecture & Data Model (ERD)](docs/ARCHITECTURE.md) — system diagram, entity-relationship diagram, technology stack.
+* [API Documentation](docs/API.md) — Server Actions and Supabase table/Auth/Storage/Realtime access surface.
+* [Testing Plan & Results](docs/TESTING.md) — methodology, 29 automated test cases, performance measurements, findings.
 
 ---
 

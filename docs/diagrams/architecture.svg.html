@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff;}</style></head>
+<body>
+<svg width="1400" height="760" viewBox="0 0 1400 760" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+<rect width="1400" height="760" fill="#ffffff"/>
+<defs>
+  <marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#374151"/>
+  </marker>
+</defs>
+
+<!-- Layer labels -->
+<text x="700" y="34" text-anchor="middle" font-size="18" font-weight="bold" fill="#111827">Arkitektura e sistemit ViziTrack (klient–klient–BaaS)</text>
+
+<!-- CLIENT LAYER -->
+<rect x="40" y="70" width="640" height="220" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+<text x="60" y="94" font-size="13" font-weight="bold" fill="#475569">SHTRESA E KLIENTIT</text>
+
+<!-- Mobile app box -->
+<g transform="translate(70,110)">
+  <rect width="270" height="160" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+  <rect width="270" height="30" rx="8" fill="#1d4ed8"/>
+  <rect width="270" height="15" y="15" fill="#1d4ed8"/>
+  <text x="135" y="20" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">mobile-app (Expo / React Native)</text>
+  <text x="12" y="50" font-size="12" fill="#111827">Rolet: punonjës në terren</text>
+  <text x="12" y="68" font-size="12" fill="#111827">(mjek, infermier, laborant)</text>
+  <text x="12" y="90" font-size="12" fill="#111827">• Agenda / kalendari i vizitave</text>
+  <text x="12" y="108" font-size="12" fill="#111827">• Check-in / Check-out</text>
+  <text x="12" y="126" font-size="12" fill="#111827">• Shënime digjitale në terren</text>
+  <text x="12" y="144" font-size="12" fill="#111827">• Cache lokale (AsyncStorage)</text>
+</g>
+
+<!-- Web admin box -->
+<g transform="translate(370,110)">
+  <rect width="270" height="160" rx="8" fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+  <rect width="270" height="30" rx="8" fill="#6d28d9"/>
+  <rect width="270" height="15" y="15" fill="#6d28d9"/>
+  <text x="135" y="20" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">web-admin (Next.js App Router)</text>
+  <text x="12" y="50" font-size="12" fill="#111827">Rolet: administrator, supervizor</text>
+  <text x="12" y="72" font-size="12" fill="#111827">• Planifikimi i vizitave / ekipeve</text>
+  <text x="12" y="90" font-size="12" fill="#111827">• Menaxhimi i pacientëve/stafit</text>
+  <text x="12" y="108" font-size="12" fill="#111827">• Paneli i raporteve (KPI)</text>
+  <text x="12" y="126" font-size="12" fill="#111827">• Regjistri i auditimit (audit log)</text>
+  <text x="12" y="144" font-size="12" fill="#111827">• Middleware SSR: RBAC + sesion</text>
+</g>
+
+<!-- Arrows client -> supabase -->
+<path d="M205,270 L205,330 L470,330 L470,390" stroke="#374151" stroke-width="1.8" fill="none" marker-end="url(#a2)"/>
+<text x="210" y="345" font-size="11" fill="#374151">HTTPS / REST (PostgREST)</text>
+<path d="M505,270 L505,300 L470,300 L470,390" stroke="#374151" stroke-width="1.8" fill="none" marker-end="url(#a2)"/>
+<text x="380" y="300" font-size="11" fill="#374151">SSR + cookies</text>
+
+<!-- BaaS layer -->
+<rect x="40" y="390" width="640" height="330" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="6,4"/>
+<text x="60" y="414" font-size="13" font-weight="bold" fill="#166534">SHTRESA BACKEND-AS-A-SERVICE — SUPABASE</text>
+
+<g transform="translate(70,430)">
+  <rect width="270" height="80" rx="6" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+  <text x="135" y="24" text-anchor="middle" font-size="13" font-weight="bold" fill="#7f1d1d">Supabase Auth</text>
+  <text x="10" y="46" font-size="11.5" fill="#111827">JWT + email/password</text>
+  <text x="10" y="63" font-size="11.5" fill="#111827">auth.uid() → politikat RLS</text>
+</g>
+
+<g transform="translate(370,430)">
+  <rect width="270" height="80" rx="6" fill="#fef9c3" stroke="#a16207" stroke-width="1.5"/>
+  <text x="135" y="24" text-anchor="middle" font-size="13" font-weight="bold" fill="#713f12">Realtime</text>
+  <text x="10" y="46" font-size="11.5" fill="#111827">postgres_changes subscriptions</text>
+  <text x="10" y="63" font-size="11.5" fill="#111827">njoftime dhe status vizite live</text>
+</g>
+
+<g transform="translate(70,530)">
+  <rect width="270" height="90" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+  <text x="135" y="24" text-anchor="middle" font-size="13" font-weight="bold" fill="#14532d">PostgreSQL + Row-Level Security</text>
+  <text x="10" y="46" font-size="11.5" fill="#111827">tabelat: users, patients, visits,</text>
+  <text x="10" y="63" font-size="11.5" fill="#111827">field_notes, audit_logs, ...</text>
+  <text x="10" y="80" font-size="11.5" fill="#111827">trigger AFTER I/U/D → audit_logs</text>
+</g>
+
+<g transform="translate(370,530)">
+  <rect width="270" height="90" rx="6" fill="#e0e7ff" stroke="#4338ca" stroke-width="1.5"/>
+  <text x="135" y="24" text-anchor="middle" font-size="13" font-weight="bold" fill="#312e81">Storage</text>
+  <text x="10" y="46" font-size="11.5" fill="#111827">bucket "lab-results"</text>
+  <text x="10" y="63" font-size="11.5" fill="#111827">dokumente/foto laboratorike</text>
+  <text x="10" y="80" font-size="11.5" fill="#111827">e ngarkuara nga mobile-app</text>
+</g>
+
+<text x="70" y="660" font-size="11.5" fill="#166534">Shënim: skema dhe politikat RLS ekzistojnë vetëm si konfigurim live në Supabase Dashboard —</text>
+<text x="70" y="678" font-size="11.5" fill="#166534">nuk ka migrime SQL të commit-uara në repository (shih §5.4, kufizim identifikuar në këtë punim).</text>
+
+<!-- Side notes panel -->
+<rect x="720" y="70" width="640" height="650" rx="8" fill="#fafafa" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="740" y="98" font-size="14" font-weight="bold" fill="#111827">Rrjedha kryesore e të dhënave</text>
+
+<text x="740" y="130" font-size="12.5" fill="#111827">1. Administratori krijon një vizitë (web-admin) → kontroll</text>
+<text x="756" y="148" font-size="12.5" fill="#111827">konflikti orari për ekipin → INSERT në "visits".</text>
+
+<text x="740" y="178" font-size="12.5" fill="#111827">2. Punonjësi hap "Agjenda" (mobile-app), filtruar sipas</text>
+<text x="756" y="196" font-size="12.5" fill="#111827">assigned_team_id dhe profesionit klinik.</text>
+
+<text x="740" y="226" font-size="12.5" fill="#111827">3. Check-in → status = in_progress, actual_start = now().</text>
+
+<text x="740" y="254" font-size="12.5" fill="#111827">4. Plotësohen shënimet digjitale (field_notes) sipas rolit</text>
+<text x="756" y="272" font-size="12.5" fill="#111827">(mjek / infermier / laborant); ngarkim dokumentesh → Storage.</text>
+
+<text x="740" y="300" font-size="12.5" fill="#111827">5. Check-out i lejuar vetëm nëse janë plotësuar shënimet e</text>
+<text x="756" y="318" font-size="12.5" fill="#111827">roleve të kërkuara (getMissingRoles) → actual_end = now().</text>
+
+<text x="740" y="346" font-size="12.5" fill="#111827">6. Çdo INSERT/UPDATE/DELETE mbi tabelat kritike shkakton</text>
+<text x="756" y="364" font-size="12.5" fill="#111827">trigger që shkruan një rresht të pandryshueshëm në audit_logs.</text>
+
+<text x="740" y="392" font-size="12.5" fill="#111827">7. Supervizori/Admini shohin panelin (KPI, audit-logs) dhe</text>
+<text x="756" y="410" font-size="12.5" fill="#111827">marrin njoftime Realtime për ngjarje të reja/urgjente.</text>
+
+<line x1="740" y1="432" x2="1340" y2="432" stroke="#e5e7eb" stroke-width="1"/>
+
+<text x="740" y="460" font-size="14" font-weight="bold" fill="#111827">Kufij sigurie mes shtresave</text>
+<text x="740" y="486" font-size="12.5" fill="#111827">• Klientët përdorin vetëm "anon key" (publik) — çdo</text>
+<text x="756" y="504" font-size="12.5" fill="#111827">  autorizim real zbatohet nga politikat RLS në Postgres.</text>
+<text x="740" y="528" font-size="12.5" fill="#111827">• "service_role key" përdoret vetëm server-side (Next.js</text>
+<text x="756" y="546" font-size="12.5" fill="#111827">  Server Actions) për krijim stafi — kurrë në klient.</text>
+<text x="740" y="570" font-size="12.5" fill="#111827">• web-admin/middleware.ts verifikon rolin nga "public.users"</text>
+<text x="756" y="588" font-size="12.5" fill="#111827">  në server, jo nga një pretendim (claim) i klientit.</text>
+<text x="740" y="612" font-size="12.5" fill="#111827">• mobile-app nuk lejon kurrë admin/supervisor të hyjnë në</text>
+<text x="756" y="630" font-size="12.5" fill="#111827">  rrjedhën e punës klinike (kontroll sipas role).</text>
+
+</svg>
+</body></html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;padding:0;background:#ffffff;}
+</style></head>
+<body>
+<svg id="erd" width="1500" height="850" viewBox="0 0 1500 850" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+<rect x="0" y="0" width="1500" height="850" fill="#ffffff"/>
+
+<!-- Style defs -->
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#4b5563"/>
+  </marker>
+</defs>
+
+<!-- Helper: entity box template drawn manually per entity -->
+
+<!-- ZONES -->
+<g transform="translate(40,40)">
+  <rect width="220" height="120" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+  <rect width="220" height="28" rx="6" fill="#4338ca"/>
+  <rect width="220" height="14" y="14" fill="#4338ca"/>
+  <text x="110" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">zones</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid</text>
+  <text x="10" y="64" font-size="12" fill="#111827">name : text</text>
+  <text x="10" y="82" font-size="12" fill="#111827">created_at : timestamptz</text>
+</g>
+
+<!-- TEAMS -->
+<g transform="translate(40,230)">
+  <rect width="220" height="130" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+  <rect width="220" height="28" rx="6" fill="#4338ca"/>
+  <rect width="220" height="14" y="14" fill="#4338ca"/>
+  <text x="110" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">teams</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid</text>
+  <text x="10" y="64" font-size="12" fill="#111827">name : text</text>
+  <text x="10" y="82" font-size="12" fill="#111827">shift_type : enum</text>
+  <text x="10" y="100" font-size="12" fill="#111827">created_at : timestamptz</text>
+</g>
+
+<!-- USERS -->
+<g transform="translate(40,450)">
+  <rect width="240" height="172" rx="6" fill="#ecfdf5" stroke="#047857" stroke-width="2"/>
+  <rect width="240" height="28" rx="6" fill="#047857"/>
+  <rect width="240" height="14" y="14" fill="#047857"/>
+  <text x="120" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">users</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid (= auth.uid)</text>
+  <text x="10" y="64" font-size="12" fill="#111827">full_name : text</text>
+  <text x="10" y="82" font-size="12" fill="#111827">email : text</text>
+  <text x="10" y="100" font-size="12" fill="#111827">role : enum(admin/supervisor/</text>
+  <text x="24" y="115" font-size="12" fill="#111827">field_worker)</text>
+  <text x="10" y="133" font-size="12" fill="#111827">profession : enum, nullable</text>
+  <text x="10" y="151" font-size="12" fill="#111827">FK  team_id → teams.id</text>
+</g>
+
+<!-- PATIENTS -->
+<g transform="translate(360,40)">
+  <rect width="260" height="190" rx="6" fill="#fff7ed" stroke="#c2410c" stroke-width="2"/>
+  <rect width="260" height="28" rx="6" fill="#c2410c"/>
+  <rect width="260" height="14" y="14" fill="#c2410c"/>
+  <text x="130" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">patients</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid</text>
+  <text x="10" y="64" font-size="12" fill="#111827">reference_code : text (PAT-XXXXXX)</text>
+  <text x="10" y="82" font-size="12" fill="#111827">age_group : enum</text>
+  <text x="10" y="100" font-size="12" fill="#111827">FK  zone_id → zones.id</text>
+  <text x="10" y="118" font-size="12" fill="#111827">address, phone_number, email</text>
+  <text x="10" y="136" font-size="12" fill="#111827">allergies : text, nullable</text>
+  <text x="10" y="154" font-size="12" fill="#111827">medical_conditions : text, null.</text>
+  <text x="10" y="172" font-size="12" fill="#111827">created_at : timestamptz</text>
+</g>
+
+<!-- VISITS -->
+<g transform="translate(700,40)">
+  <rect width="290" height="300" rx="6" fill="#fef2f2" stroke="#b91c1c" stroke-width="2"/>
+  <rect width="290" height="28" rx="6" fill="#b91c1c"/>
+  <rect width="290" height="14" y="14" fill="#b91c1c"/>
+  <text x="145" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">visits</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid</text>
+  <text x="10" y="64" font-size="12" fill="#111827">FK  patient_id → patients.id</text>
+  <text x="10" y="82" font-size="12" fill="#111827">FK  assigned_team_id → teams.id</text>
+  <text x="10" y="100" font-size="12" fill="#111827">FK  assigned_staff_id → users.id (legacy)</text>
+  <text x="10" y="118" font-size="12" fill="#111827">scheduled_start / scheduled_end</text>
+  <text x="10" y="136" font-size="12" fill="#111827">actual_start : timestamptz (check-in)</text>
+  <text x="10" y="154" font-size="12" fill="#111827">actual_end : timestamptz (check-out)</text>
+  <text x="10" y="172" font-size="12" fill="#111827">status : enum(scheduled/in_progress/</text>
+  <text x="24" y="187" font-size="12" fill="#111827">completed/cancelled)</text>
+  <text x="10" y="205" font-size="12" fill="#111827">priority : enum(normale/emergjente)</text>
+  <text x="10" y="223" font-size="12" fill="#111827">care_category : enum</text>
+  <text x="10" y="241" font-size="12" fill="#111827">is_patient_notified : boolean</text>
+  <text x="10" y="259" font-size="12" fill="#111827">created_at : timestamptz</text>
+</g>
+
+<!-- FIELD_NOTES -->
+<g transform="translate(700,400)">
+  <rect width="300" height="270" rx="6" fill="#f5f3ff" stroke="#6d28d9" stroke-width="2"/>
+  <rect width="300" height="28" rx="6" fill="#6d28d9"/>
+  <rect width="300" height="14" y="14" fill="#6d28d9"/>
+  <text x="150" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">field_notes</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid</text>
+  <text x="10" y="64" font-size="12" fill="#111827">FK  visit_id → visits.id</text>
+  <text x="10" y="82" font-size="12" fill="#111827">author_role : text</text>
+  <text x="10" y="100" font-size="12" fill="#111827">FK  doctor_id / nurse_id / laborant_id</text>
+  <text x="24" y="115" font-size="12" fill="#111827">→ users.id (nullable)</text>
+  <text x="10" y="133" font-size="12" fill="#111827">clinical_observations, doctor_therapy</text>
+  <text x="10" y="151" font-size="12" fill="#111827">interventions_performed</text>
+  <text x="10" y="169" font-size="12" fill="#111827">vital_signs_bp / hr / spo2 / temp</text>
+  <text x="10" y="187" font-size="12" fill="#111827">needs_lab_tests : boolean</text>
+  <text x="10" y="205" font-size="12" fill="#111827">requested_lab_tests, lab_results</text>
+  <text x="10" y="223" font-size="12" fill="#111827">lab_document_url : text (URL list)</text>
+  <text x="10" y="241" font-size="12" fill="#111827">is_lab_rejected, lab_rejection_reason</text>
+  <text x="10" y="259" font-size="12" fill="#111827">created_at : timestamptz</text>
+</g>
+
+<!-- NOTIFICATIONS -->
+<g transform="translate(1080,40)">
+  <rect width="260" height="190" rx="6" fill="#fefce8" stroke="#a16207" stroke-width="2"/>
+  <rect width="260" height="28" rx="6" fill="#a16207"/>
+  <rect width="260" height="14" y="14" fill="#a16207"/>
+  <text x="130" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">notifications</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid</text>
+  <text x="10" y="64" font-size="12" fill="#111827">target_role : text</text>
+  <text x="10" y="82" font-size="12" fill="#111827">FK  target_user_id → users.id (nullable)</text>
+  <text x="10" y="100" font-size="12" fill="#111827">FK  visit_id → visits.id</text>
+  <text x="10" y="118" font-size="12" fill="#111827">patient_code : text</text>
+  <text x="10" y="136" font-size="12" fill="#111827">title, message : text</text>
+  <text x="10" y="154" font-size="12" fill="#111827">is_read : boolean</text>
+  <text x="10" y="172" font-size="12" fill="#111827">created_at : timestamptz</text>
+</g>
+
+<!-- AUDIT_LOGS -->
+<g transform="translate(1080,400)">
+  <rect width="280" height="190" rx="6" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <rect width="280" height="28" rx="6" fill="#334155"/>
+  <rect width="280" height="14" y="14" fill="#334155"/>
+  <text x="140" y="19" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="bold">audit_logs</text>
+  <text x="10" y="46" font-size="12" fill="#111827">PK  id : uuid</text>
+  <text x="10" y="64" font-size="12" fill="#111827">timestamp : timestamptz</text>
+  <text x="10" y="82" font-size="12" fill="#111827">FK  user_id → users.id (nullable = sistemi)</text>
+  <text x="10" y="100" font-size="12" fill="#111827">action : enum(INSERT/UPDATE/DELETE)</text>
+  <text x="10" y="118" font-size="12" fill="#111827">table_name : text</text>
+  <text x="10" y="136" font-size="12" fill="#111827">previous_data : jsonb, nullable</text>
+  <text x="10" y="154" font-size="12" fill="#111827">new_data : jsonb, nullable</text>
+  <text x="10" y="172" font-size="12" fill="#111827">(populuar nga trigger AFTER I/U/D)</text>
+</g>
+
+<!-- Relationships -->
+<!-- zones -> patients -->
+<path d="M260,90 L360,90" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="270" y="83" font-size="11" fill="#4b5563">1..N</text>
+
+<!-- zones -> teams (visual grouping, dashed, teams cover zones via visits) -->
+<path d="M110,160 L110,230" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow)"/>
+
+<!-- teams -> users -->
+<path d="M180,360 L180,450" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="188" y="405" font-size="11" fill="#4b5563">1..N</text>
+
+<!-- patients -> visits -->
+<path d="M620,140 L700,140" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="630" y="133" font-size="11" fill="#4b5563">1..N</text>
+
+<!-- teams -> visits (orthogonal via corridor x=630) -->
+<path d="M260,294 L630,294 L630,122 L700,122" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="480" y="287" font-size="11" fill="#4b5563">1..N</text>
+
+<!-- users -> visits (legacy assigned_staff_id, corridor x=670) -->
+<path d="M280,520 L670,520 L670,140 L700,140" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow)"/>
+<text x="480" y="513" font-size="11" fill="#6b7280" font-style="italic">legacy FK</text>
+
+<!-- visits -> field_notes -->
+<path d="M845,340 L845,400" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="853" y="375" font-size="11" fill="#4b5563">1..N</text>
+
+<!-- users -> field_notes (doctor/nurse/lab, corridor x=690) -->
+<path d="M280,580 L690,580 L690,482 L700,482" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="450" y="573" font-size="11" fill="#4b5563">1..N (×3 role)</text>
+
+<!-- visits -> notifications -->
+<path d="M990,120 L1080,120" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="998" y="113" font-size="11" fill="#4b5563">1..N</text>
+
+<!-- users -> notifications (target_user_id, routed over the top, corridor x=300) -->
+<path d="M280,470 L300,470 L300,15 L1200,15 L1200,40" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow)"/>
+<text x="620" y="11" font-size="11" fill="#6b7280" font-style="italic">nullable FK</text>
+
+<!-- visits -> audit_logs (conceptual, table_name text ref) -->
+<path d="M990,340 L990,370 L1200,370 L1200,400" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4,3" fill="none" marker-end="url(#arrow)"/>
+
+<!-- users -> audit_logs (routed under everything, corridor y=685) -->
+<path d="M280,600 L280,685 L1200,685 L1200,590" stroke="#4b5563" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+<text x="700" y="679" font-size="11" fill="#4b5563">1..N</text>
+
+<!-- Legend -->
+<g transform="translate(40,700)">
+  <rect width="620" height="120" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1"/>
+  <text x="14" y="24" font-size="13" font-weight="bold" fill="#111827">Legjenda</text>
+  <line x1="14" y1="42" x2="54" y2="42" stroke="#4b5563" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="62" y="46" font-size="12" fill="#111827">Marrëdhënie 1..N (çelës i huaj i detyrueshëm / aktivisht i përdorur)</text>
+  <line x1="14" y1="66" x2="54" y2="66" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="62" y="70" font-size="12" fill="#111827">Marrëdhënie opsionale / e trashëguar (nullable ose legacy FK)</text>
+  <text x="14" y="94" font-size="12" fill="#111827">PK = çelës primar, FK = çelës i huaj. Skema e rindërtuar nga thirrjet</text>
+  <text x="14" y="110" font-size="12" fill="#111827">Supabase (.select()/.insert()) të kodit burimor, pasi s'ka migrime SQL të commit-uara.</text>
+</g>
+
+</svg>
+</body></html>
