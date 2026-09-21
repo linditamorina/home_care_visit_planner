@@ -80,7 +80,7 @@ test.describe('Planifikimi i vizitave dhe zbulimi i konflikteve (KF-02, KF-03)',
     let matchedTeam = false;
     for (const opt of teamOptions) {
       const value = await opt.getAttribute('value');
-      if (value === existing!.assigned_team_id) {
+      if (value != null && value === existing!.assigned_team_id) {
         await teamSelect.selectOption({ value });
         matchedTeam = true;
         break;
