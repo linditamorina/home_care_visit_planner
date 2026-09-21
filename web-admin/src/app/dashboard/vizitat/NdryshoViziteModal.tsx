@@ -4,8 +4,16 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ndryshoVizite } from './actions'
 
+type Visit = {
+  id: string
+  status?: string
+  priority?: string
+  is_patient_notified?: boolean
+  patients?: { reference_code?: string } | null
+}
+
 type NdryshoModalProps = {
-  visit: any
+  visit: Visit
 }
 
 export default function NdryshoViziteModal({ visit }: NdryshoModalProps) {

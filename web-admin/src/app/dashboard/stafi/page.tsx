@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import TeamCard from './TeamCard'
+import TeamCard, { type Team, type Visit } from './TeamCard'
 
 export default function MenaxhimiEkipeve() {
-  const [teamsList, setTeamsList] = useState<any[]>([])
-  const [visitsList, setVisitsList] = useState<any[]>([])
+  const [teamsList, setTeamsList] = useState<Team[]>([])
+  const [visitsList, setVisitsList] = useState<Visit[]>([])
   const [loading, setLoading] = useState(true)
 
   const supabase = createClient()
@@ -36,22 +36,24 @@ export default function MenaxhimiEkipeve() {
 
   // Lidhja Real-Time
   useEffect(() => {
-    loadData() 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData()
 
     const channel = supabase
       .channel('stafi-live-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => {
-        loadData() 
+        loadData()
       })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Funksion ndihmës për të mbledhur zonat unike për ekipin
-  const getTeamZones = (teamVisits: any[]) => {
+  const getTeamZones = (teamVisits: Visit[]) => {
     const zones = new Set(teamVisits.map(v => v.patients?.zones?.name).filter(Boolean))
     return Array.from(zones)
   }

@@ -29,11 +29,11 @@ const fieldTranslations: Record<string, string> = {
 }
 
 // 2. Formatimi Inteligjent i Vlerave (Trajtimi i Datave, Booleans dhe UUIDs)
-const formatValue = (key: string, val: any) => {
+const formatValue = (key: string, val: unknown) => {
   if (val === null || val === undefined || val === '') return <span className="text-slate-400 italic">Bosh</span>
   if (typeof val === 'boolean') return val ? 'Po' : 'Jo'
-  
-  if (key === 'status') {
+
+  if (key === 'status' && typeof val === 'string') {
     const statuses: Record<string, string> = {
       scheduled: 'Në Pritje',
       in_progress: 'Në Zhvillim (Check-In)',
@@ -61,7 +61,7 @@ const formatValue = (key: string, val: any) => {
 }
 
 // 3. UI Profesional i Ndryshimeve (GitHub Diff Style)
-const LogDetailsViewer = ({ action, oldData, newData }: { action: string, oldData: any, newData: any }) => {
+const LogDetailsViewer = ({ action, oldData, newData }: { action: string, oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null }) => {
   const ignoredFields = ['id', 'uuid', 'created_at', 'updated_at', 'visit_id', 'actor_id', 'user_id', 'nurse_id', 'doctor_id', 'laborant_id']
 
   if (action === 'UPDATE' && oldData && newData) {

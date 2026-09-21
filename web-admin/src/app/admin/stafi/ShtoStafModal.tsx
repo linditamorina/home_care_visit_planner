@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { shtoStafTeRi } from './actions'
 import { createClient } from '@/utils/supabase/client'
 
+type Team = { id: string; name: string }
+
 export default function ShtoStafModal() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // State për të mbajtur ekipet dhe rolin e zgjedhur për logjikë dinamike
-  const [teams, setTeams] = useState<any[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [selectedRole, setSelectedRole] = useState('field_worker')
 
   // Marrim listën e ekipeve nga DB vetëm kur hapet modali

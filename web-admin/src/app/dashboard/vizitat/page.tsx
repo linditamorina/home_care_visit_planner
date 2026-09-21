@@ -120,7 +120,7 @@
 //       return new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime()
 //     }
 //     if (sortBy === 'created_desc') {
-//       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+//       return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
 //     }
 //     return 0
 //   })
@@ -394,10 +394,26 @@ import NdryshoViziteModal from './NdryshoViziteModal'
 import { anuloVizite } from './actions'
 import { useSearchParams } from 'next/navigation'
 
+type Visit = {
+  id: string
+  status: string
+  priority?: string
+  scheduled_start: string
+  created_at?: string
+  assigned_team_id?: string
+  care_category?: string
+  is_patient_notified?: boolean
+  patients?: { reference_code?: string; zones?: { name?: string } | null } | null
+  teams?: { name?: string } | null
+  [key: string]: unknown
+}
+type PatientOption = { id: string, reference_code: string, zones?: { name: string } }
+type TeamOption = { id: string, name: string, shift_type: string }
+
 export default function VizitatPage() {
-  const [visits, setVisits] = useState<any[]>([])
-  const [patientsList, setPatientsList] = useState<any[]>([])
-  const [teamsList, setTeamsList] = useState<any[]>([])
+  const [visits, setVisits] = useState<Visit[]>([])
+  const [patientsList, setPatientsList] = useState<PatientOption[]>([])
+  const [teamsList, setTeamsList] = useState<TeamOption[]>([])
   const [loading, setLoading] = useState(true)
 
   const searchParams = useSearchParams()
@@ -410,7 +426,9 @@ export default function VizitatPage() {
   const [sortBy, setSortBy] = useState<'date_asc' | 'date_desc' | 'created_desc'>('date_asc')
 
   useEffect(() => {
+    // Sinkronizon filtrin lokal me query param-in ?filter= (p.sh. lidhje nga njoftimet)
     if (urlFilter) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilter(urlFilter)
     }
   }, [urlFilter])
@@ -422,7 +440,8 @@ export default function VizitatPage() {
 
   async function loadData() {
     const { data: pList } = await supabase.from('patients').select('id, reference_code, zones(name)')
-    setPatientsList(pList || [])
+    // Supabase infers embedded to-one relations si array; në runtime `zones(name)` kthen objekt të vetëm
+    setPatientsList((pList || []) as unknown as PatientOption[])
 
     const { data: tList } = await supabase.from('teams').select('id, name, shift_type')
     setTeamsList(tList || [])
@@ -444,6 +463,7 @@ export default function VizitatPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData()
 
     const channel = supabase
@@ -456,6 +476,7 @@ export default function VizitatPage() {
     return () => {
       supabase.removeChannel(channel)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function confirmCancel() {
@@ -537,7 +558,7 @@ export default function VizitatPage() {
       return new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime()
     }
     if (sortBy === 'created_desc') {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
     }
     return 0
   })
@@ -601,7 +622,7 @@ export default function VizitatPage() {
 
             <select
               value={sortBy}
-              onChange={(e: any) => setSortBy(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as typeof sortBy)}
               className="text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             >
               <option value="date_asc">Sipas Orarit (Më të afërtat)</option>

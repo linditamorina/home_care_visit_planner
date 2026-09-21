@@ -2,27 +2,55 @@
 
 import { useState, useEffect, useMemo } from 'react'
 
+type FieldNote = {
+  clinical_observations?: string
+  doctor_therapy?: string
+  interventions_performed?: string
+  vital_signs_bp?: string
+  vital_signs_hr?: string
+  vital_signs_spo2?: string
+  vital_signs_temp?: string
+  needs_lab_tests?: boolean
+  requested_lab_tests?: string
+  lab_results?: string
+  lab_document_url?: string
+  is_lab_rejected?: boolean
+  lab_rejection_reason?: string
+}
+
+type Visit = {
+  scheduled_start: string
+  status: string
+  teams?: { name?: string } | null
+  users?: { full_name?: string } | null
+  [key: string]: unknown
+}
+
 export default function VisitDetailModal({
   visit,
   fieldNote,
   labNote,
   onClose
 }: {
-  visit: any
-  fieldNote: any
-  labNote?: any 
+  visit: Visit
+  fieldNote: FieldNote | FieldNote[] | null | undefined
+  labNote?: FieldNote | FieldNote[] | null
   onClose: () => void
 }) {
   const [activeReport, setActiveReport] = useState<'doctor' | 'nurse' | 'lab'>('doctor');
 
   // Bashkimi i të dhënave për lehtësi përdorimi
-  const mergedFieldNote = Array.isArray(fieldNote) 
-    ? fieldNote.reduce((acc, curr) => ({ ...acc, ...curr }), {}) 
-    : (fieldNote || {});
-    
-  const mergedLabNote = Array.isArray(labNote) 
-    ? labNote.reduce((acc, curr) => ({ ...acc, ...curr }), {}) 
-    : (labNote || {});
+  const mergedFieldNote: FieldNote = useMemo(() => (
+    Array.isArray(fieldNote)
+      ? fieldNote.reduce((acc, curr) => ({ ...acc, ...curr }), {} as FieldNote)
+      : (fieldNote || {})
+  ), [fieldNote]);
+
+  const mergedLabNote: FieldNote = useMemo(() => (
+    Array.isArray(labNote)
+      ? labNote.reduce((acc, curr) => ({ ...acc, ...curr }), {} as FieldNote)
+      : (labNote || {})
+  ), [labNote]);
 
   // Kontrollojmë sipas fushave të reja (të pastruara nga termat mjekësorë të ndaluar)
   const hasDoctorData = !!(mergedFieldNote.clinical_observations || mergedFieldNote.doctor_therapy || mergedFieldNote.needs_lab_tests);
@@ -30,10 +58,14 @@ export default function VisitDetailModal({
   const hasLabData = !!(mergedFieldNote.needs_lab_tests || mergedLabNote.lab_results || mergedLabNote.lab_document_url || mergedFieldNote.lab_results || mergedFieldNote.lab_document_url);
 
   useEffect(() => {
+    // Zgjedh skedën fillestare/inteligjente sipas të dhënave të disponueshme; përdoruesi mund
+    // ta ndryshojë më pas manualisht (shih onClick te skedat më poshtë), prandaj mbetet efekt
+    // dhe jo vetëm gjendje fillestare e vonuar (lazy initial state).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (hasDoctorData) setActiveReport('doctor');
     else if (hasNurseData) setActiveReport('nurse');
     else if (hasLabData) setActiveReport('lab');
-    else setActiveReport('doctor'); 
+    else setActiveReport('doctor');
   }, [hasDoctorData, hasNurseData, hasLabData]);
 
   // === ALGORITMI I PARSIMIT TË HISTORIKUT LABORATOTIK ===

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { Bell, CheckCircle2, FlaskConical, ShieldAlert, Trash2, X } from 'lucide-react'
+import { Bell, CheckCircle2, Trash2, X } from 'lucide-react'
 
 type AppNotification = {
   id: string
@@ -23,7 +23,27 @@ export default function SupervisorNotifications() {
   
   const supabase = createClient()
 
+  const fetchNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('target_role', 'supervisor')
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error) throw error
+      if (data) {
+        setNotifications(data)
+        setUnreadCount(data.filter(n => !n.is_read).length)
+      }
+    } catch (err) {
+      console.error('Gabim gjatë marrjes së njoftimeve:', err)
+    }
+  }
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNotifications()
 
     const channel = supabase
@@ -48,26 +68,8 @@ export default function SupervisorNotifications() {
       supabase.removeChannel(channel)
       document.removeEventListener('mousedown', handleClickOutside)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showClearModal])
-
-  const fetchNotifications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('target_role', 'supervisor')
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (error) throw error
-      if (data) {
-        setNotifications(data)
-        setUnreadCount(data.filter(n => !n.is_read).length)
-      }
-    } catch (err) {
-      console.error('Gabim gjatë marrjes së njoftimeve:', err)
-    }
-  }
 
   const handleMarkAsRead = async (id: string, is_read: boolean) => {
     if (is_read) return

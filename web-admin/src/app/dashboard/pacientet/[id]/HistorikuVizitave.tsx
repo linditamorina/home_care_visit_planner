@@ -3,18 +3,39 @@
 import { useState, useMemo } from "react";
 import VisitDetailModal from "./VisitDetailModal";
 
+type FieldNote = {
+  lab_results?: string
+  lab_document_url?: string
+  [key: string]: unknown
+};
+
+type Visit = {
+  id: string;
+  scheduled_start: string;
+  care_category?: string;
+  status: string;
+  teams?: { name?: string } | null;
+  users?: { full_name?: string } | null;
+  [key: string]: unknown;
+};
+
+type GroupedVisit = Visit & {
+  display_date: string;
+  labNote: FieldNote | null;
+};
+
 export default function HistorikuVizitave({
   visits,
   fieldNotesMap,
 }: {
-  visits: any[];
-  fieldNotesMap: Record<string, any>;
+  visits: Visit[];
+  fieldNotesMap: Record<string, FieldNote>;
 }) {
-  const [selectedVisit, setSelectedVisit] = useState<any>(null);
+  const [selectedVisit, setSelectedVisit] = useState<GroupedVisit | null>(null);
 
   // === LOGJIKA ENTERPRISE: BASHKIMI I VIZITAVE DHE PËRDITËSIMI I ORËS ===
   const groupedVisits = useMemo(() => {
-    const result: any[] = [];
+    const result: GroupedVisit[] = [];
     const processedLabIds = new Set();
 
     // 1. Nxjerrim të gjitha vizitat kryesore (që nuk janë vetëm për laborator)

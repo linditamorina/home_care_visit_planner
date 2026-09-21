@@ -138,7 +138,7 @@ export default function ZoneActions({ zone }: { zone: Zone }) {
               </div>
               
               <h3 className="text-xl font-bold text-slate-900 mb-2">
-                Fshini zonën "{zone.name}"?
+                Fshini zonën &quot;{zone.name}&quot;?
               </h3>
               <p className="text-sm text-slate-500 px-4">
                 Ky veprim nuk mund të kthehet mbrapsht. Jeni të sigurt që dëshironi ta fshini përgjithmonë këtë zonë nga sistemi?

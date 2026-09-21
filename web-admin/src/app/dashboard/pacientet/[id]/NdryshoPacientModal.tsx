@@ -4,7 +4,18 @@ import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
-export default function NdryshoPacientModal({ patient }: { patient: any }) {
+type Patient = {
+  id: string
+  age_group?: string
+  zone_id?: string
+  address?: string
+  phone_number?: string
+  email?: string
+  allergies?: string
+  medical_conditions?: string
+}
+
+export default function NdryshoPacientModal({ patient }: { patient: Patient }) {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,8 +55,8 @@ export default function NdryshoPacientModal({ patient }: { patient: any }) {
 
       setIsOpen(false)
       router.refresh() // Kjo komandë bën që Next.js të rifreskojë menjëherë faqen në sfond
-    } catch (err: any) {
-      setError(err.message || 'Ndodhi një gabim gjatë përditësimit të pacientit.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ndodhi një gabim gjatë përditësimit të pacientit.')
     } finally {
       setLoading(false)
     }

@@ -5,8 +5,17 @@ import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 import ShtoPacientModal from './ShtoPacientModal'
 
+type Patient = {
+  id: string
+  reference_code?: string
+  age_group?: string
+  allergies?: string | null
+  zones?: { name?: string } | null
+  [key: string]: unknown
+}
+
 export default function PacientetPage() {
-  const [patients, setPatients] = useState<any[]>([])
+  const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   
   const [searchQuery, setSearchQuery] = useState('')
@@ -33,7 +42,10 @@ export default function PacientetPage() {
   }
 
   useEffect(() => {
+    // Ngarkimi fillestar i listës; loadPatients rikthehet edhe si callback (ShtoPacientModal)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPatients()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // NDRYSHIMI: Marrim emrat unikë të zonave nga objekti i lidhur 'zones'

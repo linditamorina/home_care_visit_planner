@@ -59,8 +59,7 @@ async function seedDatabase() {
   }
   console.log(`✅ U shtuan ${insertedPatients.length} pacientë sintetikë me të dhëna të plota.`);
 
-  const FIELD_WORKER_ID = 'eaf3b619-d94c-413d-a37c-8a0d4f14b2ae'; 
-  const SUPERVISOR_ID = 'a8f08adc-ba84-4507-a3a2-08ef180cb60e';
+  const FIELD_WORKER_ID = 'eaf3b619-d94c-413d-a37c-8a0d4f14b2ae';
 
   // 3. Gjenerimi i Vizitave 
   const visits = [];

@@ -27,13 +27,6 @@ export default async function DetajetEVizites({
 
   if (visitError || !visit) notFound()
 
-  // 2. Marrim raportin klinik (nëse ekziston)
-  const { data: fieldNote } = await supabase
-    .from('field_notes')
-    .select('*')
-    .eq('visit_id', visitId)
-    .maybeSingle()
-
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
       {/* Header i faqes */}

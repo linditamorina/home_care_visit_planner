@@ -34,7 +34,7 @@ export default function AdminLogoutButton() {
                 Dalje nga sistemi
               </h3>
               <p className="text-sm text-slate-600 font-medium">
-                Jeni i sigurt që dëshironi të dilni? Sesioni juaj do të mbyllet dhe do t'ju duhet të logoheni sërish.
+                Jeni i sigurt që dëshironi të dilni? Sesioni juaj do të mbyllet dhe do t&apos;ju duhet të logoheni sërish.
               </p>
             </div>
             

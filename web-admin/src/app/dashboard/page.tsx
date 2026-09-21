@@ -19,8 +19,12 @@ export default async function DashboardHome() {
     supabase.from('zones').select('name')
   ])
 
+  // Supabase infers embedded to-one relations (patients.zones) as arrays in its generic types,
+  // but at runtime `zones(name)` returns a single object here (same as elsewhere in this app).
+  type PatientWithZone = { zone_id: string; zones: { name?: string } | null }
+
   const visitsList = visits || []
-  const patientsList = patients || []
+  const patientsList = (patients || []) as unknown as PatientWithZone[]
   const officialZones = zones || []
   
   // 2. Llogaritjet për Kartat e Sipërme
@@ -49,7 +53,7 @@ export default async function DashboardHome() {
   })
 
   let unassignedCount = 0
-  patientsList.forEach((patient: any) => {
+  patientsList.forEach((patient) => {
     const zoneName = patient.zones?.name
     if (zoneName && zoneCounts[zoneName] !== undefined) {
       zoneCounts[zoneName] += 1
@@ -70,7 +74,7 @@ export default async function DashboardHome() {
 
   const totalPatientsCount = patientsList.length
   const TOP_LIMIT = 5
-  let displayZones = allZones.slice(0, TOP_LIMIT)
+  const displayZones = allZones.slice(0, TOP_LIMIT)
   const otherZones = allZones.slice(TOP_LIMIT)
   
   if (otherZones.length > 0) {

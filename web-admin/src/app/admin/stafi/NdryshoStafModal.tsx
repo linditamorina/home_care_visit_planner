@@ -4,13 +4,24 @@ import { useState, useEffect } from 'react'
 import { ndryshoStaf } from './actions'
 import { createClient } from '@/utils/supabase/client'
 
-export default function NdryshoStafModal({ user }: { user: any }) {
+type StafUser = {
+  id: string
+  full_name: string
+  email: string
+  role: string
+  profession?: string | null
+  team_id?: string | null
+}
+
+type Team = { id: string; name: string; shift_type?: string }
+
+export default function NdryshoStafModal({ user }: { user: StafUser }) {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // State për të mbajtur ekipet dhe rolin e zgjedhur për logjikë dinamike
-  const [teams, setTeams] = useState<any[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [selectedRole, setSelectedRole] = useState(user.role || 'field_worker')
 
   // Marrim listën e ekipeve nga DB vetëm kur hapet modali
@@ -152,7 +163,7 @@ export default function NdryshoStafModal({ user }: { user: any }) {
 
               {/* Rreshti 4: Fjalëkalimi */}
               <div className="pt-2 border-t border-slate-100">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Fjalëkalimi i Ri <span className="text-slate-400 font-normal lowercase">(lëre bosh nëse s'do ta ndryshosh)</span></label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Fjalëkalimi i Ri <span className="text-slate-400 font-normal lowercase">(lëre bosh nëse s&apos;do ta ndryshosh)</span></label>
                 <input 
                   type="password" 
                   name="password" 

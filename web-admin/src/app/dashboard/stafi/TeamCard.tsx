@@ -2,7 +2,18 @@
 
 import { useState } from 'react'
 
-export default function TeamCard({ team, visits, zones }: { team: any, visits: any[], zones: string[] }) {
+export type Member = { profession?: string; full_name: string }
+export type Visit = {
+  id: string
+  status?: string
+  scheduled_start: string
+  assigned_team_id?: string
+  patients?: { reference_code?: string; zones?: { name?: string } } | null
+  [key: string]: unknown
+}
+export type Team = { id: string; name?: string; shift_type?: string; users?: Member[] }
+
+export default function TeamCard({ team, visits, zones }: { team: Team, visits: Visit[], zones: string[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Formatim i saktë i orës për të parandaluar Hydration Error
@@ -15,7 +26,7 @@ export default function TeamCard({ team, visits, zones }: { team: any, visits: a
   }
 
   // Fail-Safe: Pastrimi i stringjeve nga hapësirat dhe shkronjat e mëdha
-  const safeStatus = (status: string) => status ? status.trim().toLowerCase() : ''
+  const safeStatus = (status: string | undefined) => status ? status.trim().toLowerCase() : ''
 
   // Llogaritjet Dinamike për Live Tracking
   const validVisits = visits.filter(v => safeStatus(v.status) !== 'cancelled')
@@ -45,9 +56,8 @@ export default function TeamCard({ team, visits, zones }: { team: any, visits: a
 
   // Nxjerrja e stafit
   const members = team.users || []
-  const doctor = members.find((m: any) => m.profession?.toLowerCase() === 'mjek')
-  const nurses = members.filter((m: any) => m.profession?.toLowerCase() === 'infermier')
-  const labTech = members.find((m: any) => m.profession?.toLowerCase() === 'laborant')
+  const doctor = members.find((m) => m.profession?.toLowerCase() === 'mjek')
+  const nurses = members.filter((m) => m.profession?.toLowerCase() === 'infermier')
 
   return (
     <>

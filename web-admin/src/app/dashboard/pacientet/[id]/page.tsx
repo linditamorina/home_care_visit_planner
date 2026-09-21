@@ -45,9 +45,10 @@ export default async function DetajetEPacientit({
   const visitsList = visits || [];
   
   // 4. Marrim Raportet Klinike vetëm për këto vizita
-  const fieldNotesMap: Record<string, any> = {};
+  type FieldNote = { lab_results?: string; lab_document_url?: string; [key: string]: unknown };
+  const fieldNotesMap: Record<string, FieldNote> = {};
   if (visitsList.length > 0) {
-    const visitIds = visitsList.map((v: any) => v.id);
+    const visitIds = visitsList.map((v: { id: string }) => v.id);
     const { data: notesData } = await supabase
       .from("field_notes")
       .select("*")

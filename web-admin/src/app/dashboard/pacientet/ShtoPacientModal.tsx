@@ -18,7 +18,7 @@ export default function ShtoPacientModal({ onPatientAdded }: { onPatientAdded: (
   const [conditions, setConditions] = useState('')
 
   // Shteti i ri për të mbajtur Zonat nga Databaza
-  const [zonesList, setZonesList] = useState<any[]>([])
+  const [zonesList, setZonesList] = useState<{ id: string; name: string }[]>([])
 
   const supabase = createClient()
 
@@ -41,7 +41,8 @@ export default function ShtoPacientModal({ onPatientAdded }: { onPatientAdded: (
       }
       fetchZones()
     }
-  }, [isOpen]) // Ekzekutohet vetëm kur modali hapet
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]) // Ekzekutohet vetëm kur modali hapet (zoneId ndryshon si rezultat i vetë efektit)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -81,8 +82,8 @@ export default function ShtoPacientModal({ onPatientAdded }: { onPatientAdded: (
       setIsOpen(false)
       resetForm()
       onPatientAdded()
-    } catch (err: any) {
-      setError(err.message || 'Ndodhi një gabim gjatë regjistrimit të pacientit.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ndodhi një gabim gjatë regjistrimit të pacientit.')
     } finally {
       setLoading(false)
     }
