@@ -69,7 +69,10 @@ export default function HistorikuVizitave({
       result.push({
         ...mainVisit,
         display_date: displayDate, // Kjo është ora e re e përditësuar
-        labNote: attachedLabNote || Object.values(fieldNotesMap).find(n => n.lab_results || n.lab_document_url) || null
+        // Vetëm shënimi i vizitës laboratorike të përputhur saktë (ditë + ID) — pa "fallback" të
+        // turbullt që merrte raportin e parë të gjetur diku tjetër te ky pacient (mund të ishte
+        // i një vizite krejt tjetër laboratori).
+        labNote: attachedLabNote || null
       });
     });
 

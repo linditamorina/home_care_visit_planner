@@ -106,7 +106,7 @@ export default function TeamCard({ team, visits, zones }: { team: Team, visits: 
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Infermierë</span>
-              <span className="text-xs font-semibold text-slate-700 truncate">{nurses.length}/3 caktuar</span>
+              <span className="text-xs font-semibold text-slate-700 truncate">{nurses.length} caktuar</span>
             </div>
           </div>
         </div>
