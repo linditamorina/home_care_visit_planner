@@ -103,6 +103,58 @@ test.describe('Planifikimi i vizitave dhe zbulimi i konflikteve (KF-02, KF-03)',
     await page.waitForSelector('table, [role="table"]', { timeout: 5000 }).catch(() => {});
     const elapsedMs = Date.now() - start;
     console.log(`[MATJE PERFORMANCE] Koha e ngarkimit të /dashboard/vizitat: ${elapsedMs} ms`);
-    expect(elapsedMs).toBeLessThan(5000);
+    // Prag i vetëm, i barabartë me kërkesën jofunksionale (kapitulli 3.5): < 2000 ms.
+    // I matshëm në mënyrë të qëndrueshme vetëm kundër build-it të prodhimit (npm run build
+    // && npm run start, shih playwright.config.ts) — next dev ka kompajlim "just-in-time"
+    // të Turbopack-ut që e kalon këtë prag në ekzekutimin e parë "të ftohtë".
+    expect(elapsedMs).toBeLessThan(2000);
+  });
+
+  test('TC-23: dy kërkesa njëkohshme për të njëjtin ekip/orar — vetëm njëra duhet të kalojë (mbrojtje kundër garës)', async () => {
+    // Simulon dy administratorë që dërgojnë krijoVizite njëkohësisht për të njëjtin ekip
+    // dhe orar: dy INSERT konkurrentë, direkt kundër databazës (jo përmes UI-së), për të
+    // ekzekutuar në mënyrë deterministike skenarin e "dritares së garës" (shih kufizimin
+    // no_overlapping_team_visits te supabase/migrations/…_visits_no_overlapping_team_bookings.sql
+    // dhe trajtimin e gabimit 23P01 te krijoVizite).
+    const { data: team } = await supabase.from('teams').select('id').limit(1).single();
+    const { data: patient } = await supabase.from('patients').select('id').limit(1).single();
+    test.skip(!team || !patient, 'Nuk u gjet asnjë ekip/pacient ekzistues për të ndërtuar rastin e testit.');
+
+    const farFuture = new Date();
+    farFuture.setDate(farFuture.getDate() + 300);
+    const dateStr = farFuture.toISOString().slice(0, 10);
+    const scheduled_start = `${dateStr}T09:00:00+02:00`;
+    const scheduled_end = `${dateStr}T10:00:00+02:00`;
+
+    const attemptInsert = () => supabase
+      .from('visits')
+      .insert([{
+        patient_id: patient!.id,
+        assigned_team_id: team!.id,
+        scheduled_start,
+        scheduled_end,
+        priority: 'normale',
+        care_category: 'Kujdes për të Moshuar',
+        status: 'scheduled',
+        is_patient_notified: false,
+      }])
+      .select('id');
+
+    // Të dy kërkesat nisen pa pritur njëra-tjetrën — garantohet konkurrenca reale.
+    const [r1, r2] = await Promise.all([attemptInsert(), attemptInsert()]);
+    const results = [r1, r2];
+    const succeeded = results.filter(r => !r.error);
+    const failed = results.filter(r => r.error);
+
+    // Pastrim: fshijmë çdo vizitë testimi që u fut me sukses, që të mos ndotet dataseti.
+    for (const r of succeeded) {
+      if (r.data && r.data[0]) {
+        await supabase.from('visits').delete().eq('id', r.data[0].id);
+      }
+    }
+
+    expect(succeeded.length, 'saktësisht një nga dy kërkesat konkurrente duhet të kalojë').toBe(1);
+    expect(failed.length, 'saktësisht një nga dy kërkesat konkurrente duhet të refuzohet').toBe(1);
+    expect(failed[0]?.error?.code).toBe('23P01'); // exclusion_violation
   });
 });

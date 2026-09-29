@@ -1,13 +1,26 @@
 import { Page, Locator, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
+
+// Kërkohet: TEST_USER_PASSWORD te web-admin/.env.local (jo i koduar në kod — llogaritë
+// @demo.com janë sintetike, por skedari është publik te GitHub, prandaj fjalëkalimi
+// duhet të mbetet vetëm lokal, jashtë repository-t).
+const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD;
+if (!TEST_USER_PASSWORD) {
+  throw new Error(
+    'TEST_USER_PASSWORD mungon te web-admin/.env.local — kërkohet për t\'u kyçur me llogaritë testuese gjatë ekzekutimit të e2e. Shih README.md.'
+  );
+}
 
 export const TEST_USERS = {
-  admin: { email: 'admin@demo.com', password: '123456' },
-  supervisor: { email: 'dita@demo.com', password: '123456' },
-  fieldWorkerDoctor: { email: 'hasan@demo.com', password: '123456' },
-  fieldWorkerNurse: { email: 'dardan@demo.com', password: '123456' },
-  fieldWorkerLab: { email: 'arta@demo.com', password: '123456' },
+  admin: { email: 'admin@demo.com', password: TEST_USER_PASSWORD },
+  supervisor: { email: 'dita@demo.com', password: TEST_USER_PASSWORD },
+  fieldWorkerDoctor: { email: 'hasan@demo.com', password: TEST_USER_PASSWORD },
+  fieldWorkerNurse: { email: 'dardan@demo.com', password: TEST_USER_PASSWORD },
+  fieldWorkerLab: { email: 'arta@demo.com', password: TEST_USER_PASSWORD },
 };
 
 export const SHOTS_DIR = path.join(__dirname, '..', 'e2e-results', 'screenshots');

@@ -38,7 +38,7 @@ Returns `{ error }` or `{ success: true, redirectUrl }`.
 |---|---|---|---|
 | `merrOraretEZena(team_id, date)` | positional | Fetches a team's non-cancelled, non-`Laborator` visits for the given calendar date (business timezone, via `utils/timezone.ts`), returns booked `HH:mm` slots | `string[]` |
 | `eshteVizitaEPare(patient_id)` | positional | Whether the patient has any prior non-cancelled visit | `boolean` |
-| `krijoVizite(formData)` | `patient_id`, `assigned_team_id`, `visit_date`, `visit_time`, `priority`, `care_category`, `is_patient_notified` | Converts local date/time to UTC; duration = 60 min (first visit) or 45 min; **checks for schedule conflicts** (same team, overlapping interval, non-cancelled, non-lab) before inserting | `{ error }` or `{ success: true }` |
+| `krijoVizite(formData)` | `patient_id`, `assigned_team_id`, `visit_date`, `visit_time`, `priority`, `care_category`, `is_patient_notified` | Converts local date/time to UTC; duration = 60 min (first visit) or 45 min; **checks for schedule conflicts** (same team, overlapping interval, non-cancelled, non-lab) before inserting; the same condition is also enforced as a database-level `EXCLUDE CONSTRAINT` (`no_overlapping_team_visits`, see `supabase/migrations/`), so a concurrent request that slips past the pre-check still gets rejected (Postgres error `23P01`) instead of double-booking the team | `{ error }` or `{ success: true }` |
 | `ndryshoVizite(formData)` | `visit_id`, `status`, `priority`, `is_patient_notified` | Updates a visit | `{ error }` or `{ success: true }` |
 | `anuloVizite(visit_id)` | positional | Sets `status = 'cancelled'` | `{ error }` or `{ success: true }` |
 

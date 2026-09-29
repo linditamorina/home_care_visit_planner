@@ -88,7 +88,7 @@ export async function krijoVizite(formData: FormData) {
     .from('visits')
     .insert([{
       patient_id,
-      assigned_team_id, 
+      assigned_team_id,
       scheduled_start,
       scheduled_end,
       priority,
@@ -98,6 +98,15 @@ export async function krijoVizite(formData: FormData) {
     }])
 
   if (insertError) {
+    // 23P01 = exclusion_violation: kufizimi no_overlapping_team_visits (shih
+    // supabase/migrations/20260929120000_visits_no_overlapping_team_bookings.sql) e ka
+    // refuzuar INSERT-in te databaza — rasti kur dy kërkesa arritën njëkohësisht dhe
+    // kontrolli paraprak më sipër i lejoi që të dyja, sepse asnjëra ende s'kishte bërë
+    // INSERT kur tjetra kaloi SELECT-in. Kjo është rrjeta e dytë e sigurisë që e mbyll
+    // përfundimisht dritaren e garës mes kontrollit dhe ruajtjes.
+    if (insertError.code === '23P01') {
+      return { error: '⚠️ Konflikt Orari: Ky ekip sapo u caktua në një vizitë tjetër.' }
+    }
     return { error: 'Ndodhi një gabim gjatë ruajtjes në databazë.' }
   }
 

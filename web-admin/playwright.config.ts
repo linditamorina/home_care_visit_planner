@@ -20,9 +20,13 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npm run dev',
+    // Ndërtim prodhimi, jo next dev: next dev kompajlon rrugët "just-in-time" (Turbopack),
+    // gjë që e bën TC-15 (prag < 2000ms, kapitulli 3.5) të pabesueshëm në ekzekutimin e
+    // parë "të ftohtë". next build parapërpilon çdo rrugë, kështu matjet e performancës
+    // pasqyrojnë kushtet reale të prodhimit.
+    command: 'npm run build && npm run start',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
-    timeout: 60_000,
+    timeout: 180_000,
   },
 });

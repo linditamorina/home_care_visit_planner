@@ -26,9 +26,12 @@ Create `.env.local` in this directory (never commit it):
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<your-anon-public-key>
+TEST_USER_PASSWORD=<password for the seeded @demo.com accounts>   # only needed to run e2e/
 ```
 
-Same Supabase project as `web-admin` — get these from **Settings → API**.
+Same Supabase project as `web-admin` — get the Supabase values from **Settings → API**.
+`TEST_USER_PASSWORD` is the shared password of the synthetic `@demo.com` test accounts used by
+the E2E suite (`e2e/mobile-screens.spec.ts`) — read from the environment, never committed.
 
 ### 3. Run the app
 

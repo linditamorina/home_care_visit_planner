@@ -30,11 +30,14 @@ Create `.env.local` in this directory (never commit it — it's already git-igno
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-public-key>
 SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>   # server-side only; used for staff creation & seeding
+TEST_USER_PASSWORD=<password for the seeded @demo.com accounts>   # only needed to run e2e/
 ```
 
-Get these from your Supabase project's **Settings → API**. The `anon` key is safe to expose
+Get the Supabase values from your project's **Settings → API**. The `anon` key is safe to expose
 client-side by design; the `service_role` key must **never** be exposed to the browser — it is
-only read inside Next.js Server Actions.
+only read inside Next.js Server Actions. `TEST_USER_PASSWORD` is the shared password of the
+synthetic `@demo.com` test accounts used by the E2E suite (`e2e/helpers.ts`) — it is read from
+the environment rather than committed to the repository.
 
 ### 3. Seed synthetic demo data (optional)
 
@@ -60,8 +63,20 @@ Open [http://localhost:3000](http://localhost:3000).
 npm run test:e2e
 ```
 
-Runs the 22-case Playwright E2E suite against a local dev server (auto-started). See
-[`../docs/TESTING.md`](../docs/TESTING.md) for the full test plan, results and analysis.
+Runs the 23-case Playwright E2E suite against a production build (`next build && next start`,
+auto-started — see `playwright.config.ts`). **Prerequisites, without which the suite does not
+start at all:**
+
+- `.env.local` configured as above, including `TEST_USER_PASSWORD`.
+- The Supabase project's `zones`, `patients`, `visits` and `teams` tables populated (via
+  `npx ts-node scripts/seed.ts` or equivalent) and the five `@demo.com` auth accounts created
+  with `TEST_USER_PASSWORD` as their password.
+
+Three cases (`TC-13`, `TC-14`) conditionally `test.skip()` if the synthetic/seeded data doesn't
+happen to contain a matching scenario (e.g. no team operating on the randomly-picked date) — see
+[`../docs/TESTING.md`](../docs/TESTING.md) for exactly which cases and conditions, and which
+outcome (passed vs. skipped) each run actually produced. See that same file for the full test
+plan, results and analysis.
 
 ## Project structure
 

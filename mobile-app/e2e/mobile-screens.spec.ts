@@ -1,6 +1,18 @@
 import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
+
+// Kërkohet: TEST_USER_PASSWORD te mobile-app/.env.local (jo i koduar në kod — skedari i
+// testeve është publik te GitHub, prandaj fjalëkalimi duhet të mbetet vetëm lokal).
+const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD;
+if (!TEST_USER_PASSWORD) {
+  throw new Error(
+    'TEST_USER_PASSWORD mungon te mobile-app/.env.local — kërkohet për t\'u kyçur me llogaritë testuese gjatë ekzekutimit të e2e. Shih README.md.'
+  );
+}
 
 const SHOTS_DIR = path.join(__dirname, '..', 'e2e-results', 'screenshots');
 fs.mkdirSync(SHOTS_DIR, { recursive: true });
@@ -29,13 +41,13 @@ test.describe('ViziTrack Mobile — rrjedha e punonjësit në terren (Expo web t
   });
 
   test('TC-M02: mjeku hyn me sukses dhe sheh Agjendën e ditës', async ({ page }) => {
-    await loginAsFieldWorker(page, 'hasan@demo.com', '123456');
+    await loginAsFieldWorker(page, 'hasan@demo.com', TEST_USER_PASSWORD);
     await expect(page.getByText('Detyrat e Sotme')).toBeVisible();
     await shot(page, 'm02-agenda-mjek');
   });
 
   test('TC-M03: "Historia" shfaq vizitat e përfunduara/anuluara të ekipit', async ({ page }) => {
-    await loginAsFieldWorker(page, 'hasan@demo.com', '123456');
+    await loginAsFieldWorker(page, 'hasan@demo.com', TEST_USER_PASSWORD);
     await page.getByText('Historia', { exact: true }).click();
     await expect(page.getByText('Historiku i Punës')).toBeVisible();
     await page.getByText('PËRFUNDUAR').first().waitFor({ timeout: 10000 });
@@ -43,7 +55,7 @@ test.describe('ViziTrack Mobile — rrjedha e punonjësit në terren (Expo web t
   });
 
   test('TC-M04: "Profili" shfaq të dhënat e punonjësit dhe rolin klinik', async ({ page }) => {
-    await loginAsFieldWorker(page, 'hasan@demo.com', '123456');
+    await loginAsFieldWorker(page, 'hasan@demo.com', TEST_USER_PASSWORD);
     await page.getByText('Profili', { exact: true }).click();
     await expect(page.getByText('Profili Im')).toBeVisible();
     await expect(page.getByText('Mjek', { exact: true }).first()).toBeVisible();
@@ -51,7 +63,7 @@ test.describe('ViziTrack Mobile — rrjedha e punonjësit në terren (Expo web t
   });
 
   test('TC-M05: "Ndihma dhe Suporti" hap qendrën e suportit me manual përdorimi dhe kontakt IT', async ({ page }) => {
-    await loginAsFieldWorker(page, 'hasan@demo.com', '123456');
+    await loginAsFieldWorker(page, 'hasan@demo.com', TEST_USER_PASSWORD);
     await page.getByText('Profili', { exact: true }).click();
     await page.getByText('Ndihma dhe Suporti', { exact: true }).click();
     await expect(page.getByText('Qendra e Suportit')).toBeVisible();
@@ -61,14 +73,14 @@ test.describe('ViziTrack Mobile — rrjedha e punonjësit në terren (Expo web t
   });
 
   test('TC-M06: laboranti hyn dhe sheh Agjendën e vet (rol i ndryshëm nga mjeku)', async ({ page }) => {
-    await loginAsFieldWorker(page, 'arta@demo.com', '123456');
+    await loginAsFieldWorker(page, 'arta@demo.com', TEST_USER_PASSWORD);
     await expect(page.getByText('Agjenda:')).toBeVisible();
     await expect(page.getByText('Laborant', { exact: true })).toBeVisible();
     await shot(page, 'm06-agenda-laborant');
   });
 
   test('TC-M07: infermieri hyn dhe sheh Agjendën e vet', async ({ page }) => {
-    await loginAsFieldWorker(page, 'dardan@demo.com', '123456');
+    await loginAsFieldWorker(page, 'dardan@demo.com', TEST_USER_PASSWORD);
     await expect(page.getByText('Agjenda:')).toBeVisible();
     await expect(page.getByText('Infermier', { exact: true })).toBeVisible();
     await shot(page, 'm07-agenda-infermier');
