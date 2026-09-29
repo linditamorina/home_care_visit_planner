@@ -56,8 +56,8 @@ export default function ShtoPacientModal({ onPatientAdded }: { onPatientAdded: (
     }
 
     try {
-      // Gjenerojmë një kod të sigurt e të rastësishëm (p.sh. PAT-X7K9)
-      const randomCode = Math.random().toString(36).substring(2, 6).toUpperCase()
+      // Gjenerojmë një kod të sigurt e të rastësishëm, 6 karaktere (p.sh. PAT-X7K9M2)
+      const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase()
       const referenceCode = `PAT-${randomCode}`
 
       // Dërgojmë të dhënat në databazë

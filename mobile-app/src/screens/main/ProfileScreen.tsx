@@ -263,7 +263,7 @@ export default function ProfileScreen() {
                   <Ionicons name="cloud-offline" size={18} color="#f59e0b" />
                   <Text style={styles.manualTitle}>2. Puna Jashtë Linje (Offline)</Text>
                 </View>
-                <Text style={styles.manualDesc}>Nëse nuk keni internet, ViziTrack ruan automatikisht të dhënat në telefon. Një shirit portokalli do t'ju njoftojë. Kur të keni sërish rrjet, të dhënat dërgohen automatikisht në server.</Text>
+                <Text style={styles.manualDesc}>Nëse nuk keni internet, ViziTrack ruan përkohësisht të dhënat në telefon dhe një shirit portokalli do t'ju njoftojë. Këto të dhëna NUK dërgohen vetvetiu te serveri kur t'ju kthehet interneti — sapo të keni rrjet, hapni sërish vizitën dhe ruani edhe një herë (Check-In/Check-Out, Shto Shënime) që të dhënat të arrijnë realisht te serveri.</Text>
               </View>
 
               <View style={styles.manualBlock}>

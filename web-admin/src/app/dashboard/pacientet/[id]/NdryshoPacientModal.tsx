@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -23,14 +23,37 @@ export default function NdryshoPacientModal({ patient }: { patient: Patient }) {
 
   // Shtetet mbushen automatikisht me të dhënat ekzistuese të pacientit
   const [ageGroup, setAgeGroup] = useState(patient.age_group || '18-30')
-  const [zoneId, setZoneId] = useState(patient.zone_id || 'Zona Qendër')
+  const [zoneId, setZoneId] = useState(patient.zone_id || '')
   const [address, setAddress] = useState(patient.address || '')
   const [phone, setPhone] = useState(patient.phone_number || '')
   const [email, setEmail] = useState(patient.email || '')
   const [allergies, setAllergies] = useState(patient.allergies || '')
   const [conditions, setConditions] = useState(patient.medical_conditions || '')
 
+  // Zonat merren dinamikisht nga databaza (jo listë fikse) — shih ShtoPacientModal.tsx
+  const [zonesList, setZonesList] = useState<{ id: string; name: string }[]>([])
+
   const supabase = createClient()
+
+  useEffect(() => {
+    if (isOpen) {
+      async function fetchZones() {
+        const { data } = await supabase
+          .from('zones')
+          .select('id, name')
+          .order('name', { ascending: true })
+
+        if (data) {
+          setZonesList(data)
+          if (data.length > 0 && !zoneId) {
+            setZoneId(data[0].id)
+          }
+        }
+      }
+      fetchZones()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -101,11 +124,10 @@ export default function NdryshoPacientModal({ patient }: { patient: Patient }) {
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Zona / Regjioni *</label>
                     <select value={zoneId} onChange={(e) => setZoneId(e.target.value)} className={inputClassName} required>
-                      <option value="Zona Qendër">Zona Qendër</option>
-                      <option value="Zona Veriore">Zona Veriore</option>
-                      <option value="Zona Jugore">Zona Jugore</option>
-                      <option value="Zona Lindore">Zona Lindore</option>
-                      <option value="Zona Perëndimore">Zona Perëndimore</option>
+                      <option value="" disabled>-- Zgjidh Zonën --</option>
+                      {zonesList.map((zone) => (
+                        <option key={zone.id} value={zone.id}>{zone.name}</option>
+                      ))}
                     </select>
                   </div>
 

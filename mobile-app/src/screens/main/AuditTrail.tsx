@@ -48,7 +48,21 @@ export default function AuditTrail() {
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      
+
+      // Kufizojmë historikun te ekipi i vetë punonjësit (siç thotë tashmë nëntitulli i
+      // ekranit) — pa këtë, çdo punonjës shihte historikun e ekipeve të tjera po ashtu.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setHistory([]); return; }
+
+      const { data: userData } = await supabase
+        .from('users')
+        .select('team_id')
+        .eq('id', user.id)
+        .single();
+
+      const teamId = userData?.team_id;
+      if (!teamId) { setHistory([]); return; }
+
       const { data, error } = await supabase
         .from('visits')
         .select(`
@@ -67,9 +81,10 @@ export default function AuditTrail() {
             medical_conditions
           )
         `)
+        .eq('assigned_team_id', teamId)
         .in('status', ['completed', 'cancelled'])
         .order('scheduled_start', { ascending: false }) // Më të rejat lart
-        .limit(50); 
+        .limit(50);
 
       if (error) {
         console.error('Gabim gjatë marrjes së historikut:', error.message);
