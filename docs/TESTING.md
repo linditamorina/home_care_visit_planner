@@ -57,7 +57,7 @@ cd mobile-app && npx playwright test
 
 ### Rastet me kusht (`test.skip`)
 
-Tre thirrje `test.skip()`, të gjitha brenda `03-visits-scheduling.spec.ts`, i lidhin rastet me
+Katër thirrje `test.skip()`, të gjitha brenda `03-visits-scheduling.spec.ts`, i lidhin rastet me
 gjendjen aktuale të të dhënave sintetike (të gjeneruara pjesërisht në mënyrë rastësore) — nëse
 kushti nuk plotësohet, Playwright e raporton rastin si **SKIPPED**, jo si PASSED apo FAILED:
 
@@ -66,8 +66,9 @@ kushti nuk plotësohet, Playwright e raporton rastin si **SKIPPED**, jo si PASSE
 | TC-13 | `03-visits-scheduling.spec.ts:45` | Asnjë ekip nuk operon në datën e zgjedhur rastësisht |
 | TC-14 | `03-visits-scheduling.spec.ts:63` | Nuk u gjet asnjë vizitë ekzistuese për të testuar konfliktin |
 | TC-14 | `03-visits-scheduling.spec.ts:89` | Ekipi i vizitës ekzistuese nuk ishte i zgjedhshëm në UI për atë datë |
+| TC-23 | `03-visits-scheduling.spec.ts:121` | Nuk u gjet asnjë ekip/pacient ekzistues për të ndërtuar rastin e testit |
 
-Në ekzekutimin real të raportuar më poshtë, të tria kushtet u plotësuan dhe **asnjë rast nuk u
+Në ekzekutimin real të raportuar më poshtë, të katra kushtet u plotësuan dhe **asnjë rast nuk u
 "skip"-ua** — të 30 rastet u ekzekutuan si teste të plota (jo të anashkaluara). Ky rezultat nuk
 është i garantuar në çdo ekzekutim, pasi varet nga të dhënat e gjeneruara në atë moment.
 
