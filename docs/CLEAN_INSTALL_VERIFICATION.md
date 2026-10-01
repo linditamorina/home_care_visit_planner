@@ -117,8 +117,11 @@ Running 7 tests using 1 worker
 ## Përmbledhje
 
 **30 nga 30 raste testimi KALOJNË** (0 skipped), nga një instalim `npm ci` i pastër (jo
-`npm install`), kundër commit-it `fb2237f35fa11ad3b6646fd8b1baf8f212792e88` (`fb2237f`, HEAD i
-`main` më 2026-10-01) dhe kundër databazës Supabase reale (jo të simuluar). Koha e ngarkimit e
+`npm install`), kundër kodit aplikativ të commit-it `fb2237f35fa11ad3b6646fd8b1baf8f212792e88`
+(`fb2237f`) dhe kundër databazës Supabase reale (jo të simuluar). *Ky ishte HEAD i `main` në
+momentin e ekzekutimit (2026-10-01, para se ky dokument vetë të commit-ohej); commit-et e
+mëvonshme mbi të janë vetëm dokumentacion (shih "Përditësim" më poshtë) dhe nuk e ndryshojnë
+kodin e verifikuar këtu — për HEAD-in aktual, shih `git log -1`.* Koha e ngarkimit e
 matur në TC-15: **604 ms** — thellë nën pragun 2000 ms të kërkesës jofunksionale, matur kundër një
 ndërtimi prodhimi (`next build && next start`), jo `next dev`.
 

@@ -72,8 +72,9 @@ start at all:**
   `npx ts-node scripts/seed.ts` or equivalent) and the five `@demo.com` auth accounts created
   with `TEST_USER_PASSWORD` as their password.
 
-Three cases (`TC-13`, `TC-14`) conditionally `test.skip()` if the synthetic/seeded data doesn't
-happen to contain a matching scenario (e.g. no team operating on the randomly-picked date) — see
+Four cases (`TC-13`, `TC-14` x2, `TC-23`) conditionally `test.skip()` if the synthetic/seeded
+data doesn't happen to contain a matching scenario (e.g. no team operating on the
+randomly-picked date) — see
 [`../docs/TESTING.md`](../docs/TESTING.md) for exactly which cases and conditions, and which
 outcome (passed vs. skipped) each run actually produced. See that same file for the full test
 plan, results and analysis.
